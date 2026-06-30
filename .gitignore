@@ -10,4 +10,8 @@ models/*.h5
 outputs/*.csv
 outputs/*.json
 outputs/*.png
+!outputs/underfit_loss.png
+!outputs/overfit_loss.png
+!outputs/goodfit_loss.png
+!outputs/demo_path.png
 outputs/*.txt

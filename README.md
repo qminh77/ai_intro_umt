@@ -1,4 +1,4 @@
-# 🧠 Maze Pathfinding: A* with Artificial Neural Network (ANN) Heuristic
+# Maze Pathfinding: A* with Artificial Neural Network (ANN) Heuristic
 
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue" alt="Python Versions">
@@ -6,7 +6,7 @@
   <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
 </p>
 
-## 📖 1. Giới thiệu (Introduction)
+## 1. Giới thiệu (Introduction)
 
 Dự án này là một minh họa trực quan và chuyên sâu về cách ứng dụng **Học máy (Machine Learning)** vào các bài toán tìm kiếm đồ thị cổ điển. Cụ thể, dự án sử dụng **Mạng nơ-ron nhân tạo (ANN)** để học và xấp xỉ một hàm Heuristic cho thuật toán **A*** trong bài toán tìm đường đi ngắn nhất trong mê cung.
 
@@ -19,7 +19,7 @@ Dự án cũng đồng thời là một bài thực hành tuyệt vời để hi
 
 ---
 
-## 🏗 2. Cấu trúc Dự án (Project Structure)
+## 2. Cấu trúc Dự án (Project Structure)
 
 ```text
 maze-ann-a-star/
@@ -47,7 +47,7 @@ maze-ann-a-star/
 
 ---
 
-## 🔬 3. Cơ sở Lý thuyết (Theoretical Background)
+## 3. Cơ sở Lý thuyết (Theoretical Background)
 
 ### 3.1. Thuật toán A* (A* Algorithm)
 A* kết hợp ưu điểm của thuật toán Dijkstra và Greedy Best-First Search. Tại mỗi bước, A* chọn đỉnh $n$ để mở rộng dựa trên hàm đánh giá:
@@ -67,7 +67,7 @@ Thay vì dùng công thức toán học cố định, ta huấn luyện một m�
 
 ---
 
-## 🗂 4. Dữ liệu (Dataset)
+## 4. Dữ liệu (Dataset)
 
 Để mạng nơ-ron học được khoảng cách, chúng ta cần một tập dữ liệu (dataset) có gán nhãn. Quá trình tạo dữ liệu diễn ra như sau:
 1. **Tạo mê cung ngẫu nhiên**: Sinh các lưới với các vật cản (tường) phân bố ngẫu nhiên.
@@ -80,7 +80,7 @@ Thay vì dùng công thức toán học cố định, ta huấn luyện một m�
 
 ---
 
-## 🤖 5. Mô hình Học Máy (Machine Learning Models)
+## 5. Mô hình Học Máy (Machine Learning Models)
 
 Dự án thiết kế sẵn 3 kiến trúc mô hình khác nhau để so sánh và làm rõ các hiện tượng trong quá trình huấn luyện:
 
@@ -94,7 +94,7 @@ Dự án thiết kế sẵn 3 kiến trúc mô hình khác nhau để so sánh v
 
 ---
 
-## 🚀 6. Hướng dẫn Cài đặt & Sử dụng
+## 6. Hướng dẫn Cài đặt & Sử dụng
 
 ### 6.1. Cài đặt Môi trường
 Khuyến nghị sử dụng Python **3.10, 3.11, hoặc 3.12**.
@@ -138,7 +138,7 @@ Kết quả sẽ xuất ra terminal dạng bảng metrics và lưu hình ảnh v
 
 ---
 
-## 📊 7. Kết quả & Đánh giá (Results & Evaluation)
+## 7. Kết quả & Đánh giá (Results & Evaluation)
 
 ### 7.1. Phân tích quá trình Huấn luyện (Training Analysis)
 
@@ -177,9 +177,9 @@ Kết quả khi đưa 3 thuật toán vào chạy chung một màn chơi:
 
 | Thuật toán | Tìm thấy đường | Chiều dài đường đi | Số Node Mở Rộng | Thời gian chạy |
 | :--- | :---: | :---: | :---: | :---: |
-| **BFS** | ✅ | 20 | 104 | ~0.09 ms |
-| **A* + Manhattan** | ✅ | 20 | 46 | ~0.06 ms |
-| **A* + ANN (Goodfit)** | ✅ | 20 | **33** | ~681.70 ms* |
+| **BFS** | Có | 20 | 104 | ~0.09 ms |
+| **A* + Manhattan** | Có | 20 | 46 | ~0.06 ms |
+| **A* + ANN (Goodfit)** | Có | 20 | **33** | ~681.70 ms* |
 
 *(Ghi chú: Thời gian của ANN cao hơn do quá trình Infer qua model Keras cho từng node tốn nhiều overhead hơn tính toán biểu thức toán học. Trong thực tế để tối ưu thời gian, có thể dùng TensorRT, ONNX hoặc batch inference.)*
 
@@ -197,7 +197,7 @@ Kết quả khi đưa 3 thuật toán vào chạy chung một màn chơi:
 
 ---
 
-## 📚 8. Ứng dụng & Hướng Phát Triển (Future Work)
+## 8. Ứng dụng & Hướng Phát Triển (Future Work)
 
 **Ý nghĩa:** Dự án này là công cụ giảng dạy/học tập cực tốt để giải thích vì sao cần Machine Learning, tác hại của Underfit/Overfit, và vai trò của Heuristic trong Trí tuệ nhân tạo (AI).
 
