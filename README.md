@@ -1,302 +1,212 @@
-# Maze ANN A* Project
+# 🧠 Maze Pathfinding: A* with Artificial Neural Network (ANN) Heuristic
 
-Dự án này minh họa cách sử dụng mạng nơ-ron nhân tạo (ANN) để học một hàm heuristic cho thuật toán A* trong bài toán tìm đường trong mê cung. Mục tiêu là so sánh giữa ba phương pháp tìm đường: BFS, A* với heuristic Manhattan và A* với heuristic học được từ dữ liệu.
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue" alt="Python Versions">
+  <img src="https://img.shields.io/badge/TensorFlow-2.15+-orange.svg" alt="TensorFlow">
+  <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
+</p>
 
-## 1. Tổng quan
+## 📖 1. Giới thiệu (Introduction)
 
-Mê cung được biểu diễn bằng lưới ô vuông, trong đó mỗi ô có thể là:
+Dự án này là một minh họa trực quan và chuyên sâu về cách ứng dụng **Học máy (Machine Learning)** vào các bài toán tìm kiếm đồ thị cổ điển. Cụ thể, dự án sử dụng **Mạng nơ-ron nhân tạo (ANN)** để học và xấp xỉ một hàm Heuristic cho thuật toán **A*** trong bài toán tìm đường đi ngắn nhất trong mê cung.
 
-- 0: ô trống, có thể đi qua
-- 1: tường hoặc vật cản
-- S: điểm bắt đầu
-- G: điểm đích
+Mục tiêu chính của dự án là so sánh hiệu suất, số lượng node được duyệt và thời gian chạy giữa ba phương pháp:
+1. **BFS (Breadth-First Search)**: Tìm kiếm mù, duyệt qua tất cả các trạng thái.
+2. **A* + Manhattan Heuristic**: Tìm kiếm heuristic kinh điển, sử dụng khoảng cách Manhattan.
+3. **A* + ANN Heuristic**: Tìm kiếm heuristic hiện đại, sử dụng mạng nơ-ron để dự đoán chi phí đường đi dựa trên dữ liệu học được.
 
-Ví dụ về mê cung đơn giản:
+Dự án cũng đồng thời là một bài thực hành tuyệt vời để hiểu về các khái niệm trong Machine Learning như: **Overfitting, Underfitting, Dropout, Early Stopping**, và **Cross-validation**.
 
-```text
-S . # . .
-. . # . G
-. . . . .
-# . # . .
-. . . . .
-```
+---
 
-Trong dự án này, thuật toán A* được cải thiện bằng một heuristic được học bởi ANN thay vì dùng heuristic Manhattan thủ công.
-
-## 2. Ý tưởng chính
-
-Thuật toán A* tìm đường bằng cách mở rộng các nút có giá trị:
-
-$$
- f(n) = g(n) + h(n)
-$$
-
-Trong đó:
-- $g(n)$ là chi phí từ điểm bắt đầu đến nút hiện tại
-- $h(n)$ là ước lượng chi phí còn lại từ nút hiện tại đến đích
-
-### Hai loại heuristic được dùng
-
-1. Heuristic Manhattan
-   - Công thức: $|x_1-x_2| + |y_1-y_2|$
-   - Nhanh và dễ hiểu
-   - Thường là heuristic hợp lệ trong mê cung 4 hướng không có trọng số
-
-2. Heuristic bằng ANN
-   - Mạng nơ-ron học trực tiếp từ dữ liệu được tạo bằng BFS
-   - Mỗi trạng thái đầu vào gồm các đặc trưng về vị trí, mục tiêu và các bức tường xung quanh
-   - Đầu ra là ước lượng khoảng cách còn lại đến đích
-
-## 3. Mô hình học và dữ liệu
-
-### 3.1. Đặc trưng đầu vào
-
-Mỗi trạng thái được chuyển thành một vector 10 đặc trưng gồm:
-
-- tọa độ hiện tại $(x, y)$
-- tọa độ đích $(goal_x, goal_y)$
-- vector hướng $(dx, dy)$
-- các thông tin về tường ở bốn phía: up, down, left, right
-
-### 3.2. Nhãn mục tiêu
-
-Nhãn $true\_distance$ được tạo bằng thuật toán BFS từ mỗi trạng thái đến đích. Đây là khoảng cách ngắn nhất thực tế trong mê cung, nên phù hợp làm mục tiêu học cho ANN.
-
-## 4. Kiến trúc mô hình
-
-Dự án xây dựng ba thí nghiệm mạng nơ-ron khác nhau để minh họa các hiện tượng học máy:
-
-| Thí nghiệm | Mô hình | Mục đích |
-| --- | --- | --- |
-| Underfit | Mạng nhỏ, ít epoch | Minh họa trường hợp học chưa đủ, chưa nắm được mẫu |
-| Overfit | Mạng lớn, huấn luyện dài, dữ liệu hạn chế | Minh họa trường hợp quá khớp dữ liệu huấn luyện |
-| Good Fit | Mạng vừa phải, có Dropout và EarlyStopping | Minh họa mô hình học tốt, tổng quát hóa tốt |
-
-Các mô hình được triển khai bằng TensorFlow/Keras với hàm mất mát MSE và metric MAE.
-
-## 5. Cấu trúc thư mục
+## 🏗 2. Cấu trúc Dự án (Project Structure)
 
 ```text
 maze-ann-a-star/
-├── data/                  # Dataset CSV sinh ra từ mê cung
-├── models/                # Các file model Keras đã huấn luyện
-├── outputs/               # Biểu đồ loss, metrics và kết quả demo
-├── reports/               # Bản thảo báo cáo và kết quả phân tích
-├── slides/                # Nội dung slide thuyết trình
-├── src/
-│   ├── config.py
-│   ├── maze.py            # Tạo mê cung và thao tác trên lưới
-│   ├── search.py          # BFS, A*, heuristic Manhattan
-│   ├── features.py        # Chuyển state thành vector đặc trưng
-│   ├── dataset.py         # Tạo dataset có nhãn bằng BFS
-│   ├── generate_dataset.py
-│   ├── models.py          # Ba kiến trúc ANN cho 3 thí nghiệm
-│   ├── train.py           # Huấn luyện các mô hình
-│   ├── cross_validate.py  # Cross-validation
-│   ├── heuristics.py      # Tích hợp ANN như heuristic cho A*
-│   ├── visualize.py       # Vẽ mê cung và đường đi
-│   └── demo.py            # So sánh BFS, A* + Manhattan, A* + ANN
-├── requirements.txt
-└── README.md
+├── data/                  # Dataset CSV sinh ra từ thuật toán BFS để làm nhãn học
+├── models/                # Các file model Keras (.keras) đã huấn luyện
+├── outputs/               # Biểu đồ loss, metrics, ảnh demo và log kết quả huấn luyện
+├── reports/               # Báo cáo và phân tích chuyên sâu
+├── slides/                # Tài liệu slide thuyết trình
+├── src/                   # Source code chính của dự án
+│   ├── config.py          # Cấu hình đường dẫn và hằng số
+│   ├── maze.py            # Khởi tạo và thao tác trên lưới mê cung
+│   ├── search.py          # Triển khai thuật toán BFS, A* và heuristic Manhattan
+│   ├── features.py        # Trích xuất đặc trưng (Feature extraction) từ trạng thái mê cung
+│   ├── dataset.py         # Xây dựng dataset với nhãn được đánh bằng BFS
+│   ├── generate_dataset.py# Script tự động sinh hàng loạt dataset
+│   ├── models.py          # Định nghĩa 3 kiến trúc mạng ANN (Underfit, Overfit, Goodfit)
+│   ├── train.py           # Script huấn luyện mô hình
+│   ├── cross_validate.py  # Script đánh giá chéo (Cross-validation)
+│   ├── heuristics.py      # Tích hợp model Keras thành hàm heuristic cho A*
+│   ├── visualize.py       # Render hình ảnh mê cung và vẽ đường đi
+│   └── demo.py            # Chạy so sánh thực tế giữa BFS, A* Manhattan và A* ANN
+├── requirements.txt       # Các thư viện phụ thuộc
+└── README.md              # File tài liệu bạn đang đọc
 ```
 
-## 6. Yêu cầu môi trường
+---
 
-Khuyến nghị dùng Python 3.10, 3.11 hoặc 3.12 để tránh các vấn đề tương thích với TensorFlow.
+## 🔬 3. Cơ sở Lý thuyết (Theoretical Background)
 
-### Cài đặt
+### 3.1. Thuật toán A* (A* Algorithm)
+A* kết hợp ưu điểm của thuật toán Dijkstra và Greedy Best-First Search. Tại mỗi bước, A* chọn đỉnh $n$ để mở rộng dựa trên hàm đánh giá:
+
+$$ f(n) = g(n) + h(n) $$
+
+Trong đó:
+- $g(n)$: Chi phí chính xác từ điểm xuất phát (Start) đến node $n$.
+- $h(n)$: **Heuristic** - ước lượng chi phí từ node $n$ đến đích (Goal).
+
+### 3.2. Heuristic Manhattan
+Trên lưới ô vuông 4 hướng (lên, xuống, trái, phải) không có vật cản đường chéo, khoảng cách Manhattan là một heuristic **admissible** (luôn ước lượng thấp hơn hoặc bằng thực tế).
+Công thức: $h(n) = |x_{current} - x_{goal}| + |y_{current} - y_{goal}|$
+
+### 3.3. Heuristic học bằng ANN
+Thay vì dùng công thức toán học cố định, ta huấn luyện một mạng nơ-ron nhận đầu vào là trạng thái của mê cung và dự đoán khoảng cách đến đích. Mạng nơ-ron có thể nắm bắt được sự tồn tại của các bức tường (vật cản) xung quanh để đưa ra dự đoán thực tế hơn so với Manhattan.
+
+---
+
+## 🗂 4. Dữ liệu (Dataset)
+
+Để mạng nơ-ron học được khoảng cách, chúng ta cần một tập dữ liệu (dataset) có gán nhãn. Quá trình tạo dữ liệu diễn ra như sau:
+1. **Tạo mê cung ngẫu nhiên**: Sinh các lưới với các vật cản (tường) phân bố ngẫu nhiên.
+2. **Trích xuất đặc trưng (Feature Extraction)**: Mỗi trạng thái được chuyển thành một vector gồm 10 chiều:
+   - Tọa độ hiện tại: `x`, `y`
+   - Tọa độ đích: `goal_x`, `goal_y`
+   - Vector hướng: `dx = goal_x - x`, `dy = goal_y - y`
+   - Cảm biến tường xung quanh (4 chiều): `up`, `down`, `left`, `right` (giá trị 0 hoặc 1).
+3. **Gán nhãn (Labeling)**: Chạy thuật toán **BFS** từ trạng thái hiện tại đến đích để tìm khoảng cách ngắn nhất thực tế (`true_distance`). Khoảng cách này được dùng làm nhãn (target) để huấn luyện ANN.
+
+---
+
+## 🤖 5. Mô hình Học Máy (Machine Learning Models)
+
+Dự án thiết kế sẵn 3 kiến trúc mô hình khác nhau để so sánh và làm rõ các hiện tượng trong quá trình huấn luyện:
+
+| Tên Thí Nghiệm | Kiến trúc Mạng (Các lớp Dense) | Số Epoch | Dữ liệu Train | Kỹ thuật dùng | Mục đích Minh họa |
+| :--- | :--- | :---: | :---: | :--- | :--- |
+| **Underfit** | Nhỏ (Input $\to$ 4 $\to$ 1) | 5 | Toàn bộ | Không có | Mô hình quá đơn giản, học ít epoch $\Rightarrow$ Không nắm bắt được quy luật. |
+| **Overfit** | Rất Lớn (Input $\to$ 512 $\to$ 512 $\to$ 256 $\to$ 128 $\to$ 1) | 150 | Giới hạn (3,000) | Không có | Mô hình phức tạp, dữ liệu ít, train lâu $\Rightarrow$ "Học vẹt" dữ liệu train, dự đoán kém trên test. |
+| **Goodfit** | Vừa phải (Input $\to$ 64 $\to$ Dropout(0.2) $\to$ 32 $\to$ 16 $\to$ 1) | 100 | Toàn bộ | Dropout, Early Stopping | Cân bằng tốt, chống overfit, dừng sớm khi validation loss không giảm. |
+
+*Hàm loss: Mean Squared Error (MSE) - Metric: Mean Absolute Error (MAE)*
+
+---
+
+## 🚀 6. Hướng dẫn Cài đặt & Sử dụng
+
+### 6.1. Cài đặt Môi trường
+Khuyến nghị sử dụng Python **3.10, 3.11, hoặc 3.12**.
 
 ```bash
+# 1. Tạo môi trường ảo
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate  # (Với Windows: .venv\Scripts\activate)
+
+# 2. Cập nhật pip và cài đặt thư viện
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-Nếu máy của bạn đang dùng Python mới hơn và TensorFlow gặp lỗi, hãy chuyển về Python 3.11 hoặc 3.12.
+### 6.2. Pipeline Chạy Dự án
 
-## 7. Quy trình chạy dự án
-
-### Bước 1: Tạo dataset
-
+**Bước 1: Sinh dữ liệu huấn luyện (Generate Dataset)**
+Sinh ngẫu nhiên 500 mê cung, mỗi mê cung lấy tối đa 200 mẫu. File đầu ra: `data/maze_dataset.csv`.
 ```bash
 python -m src.generate_dataset --mazes 500 --max-samples-per-maze 200
 ```
 
-Kết quả sẽ tạo ra file:
-
-```text
-data/maze_dataset.csv
-```
-
-Mỗi dòng trong file CSV chứa một trạng thái mê cung cùng nhãn khoảng cách thực tế.
-
-### Bước 2: Huấn luyện 3 thí nghiệm ANN
-
+**Bước 2: Huấn luyện các Mô hình ANN (Train Models)**
+Chạy cả 3 thí nghiệm (underfit, overfit, goodfit). File model sẽ lưu tại thư mục `models/`, lịch sử và logs lưu tại `outputs/`.
 ```bash
 python -m src.train --experiment all
 ```
 
-Kết quả bao gồm:
-
-```text
-models/ann_heuristic_underfit.keras
-models/ann_heuristic_overfit.keras
-models/ann_heuristic_goodfit.keras
-outputs/underfit_history.csv
-outputs/overfit_history.csv
-outputs/goodfit_history.csv
-outputs/training_summary.json
-```
-
-### Bước 3: Cross-validation
-
+**Bước 3: Chạy Đánh giá chéo (Cross-Validation)**
+Để kiểm chứng độ ổn định của model, chạy 5-fold cross-validation:
 ```bash
 python -m src.cross_validate --folds 5 --epochs 30
 ```
 
-Kết quả sẽ lưu vào:
-
-```text
-outputs/cross_validation.json
-```
-
-### Bước 4: Chạy demo so sánh thuật toán
-
+**Bước 4: Chạy Demo so sánh các thuật toán (Demo)**
+Xem trực quan đường đi của BFS, A* Manhattan và A* ANN trên cùng một mê cung.
 ```bash
 python -m src.demo
 ```
-
-Kết quả bao gồm:
-
-```text
-outputs/demo_path.png
-outputs/demo_metrics.json
-```
-
-Demo sẽ so sánh:
-- BFS
-- A* + Manhattan
-- A* + ANN (nếu đã có model tốt)
-
-## 8. Kết quả thực nghiệm đã thu được
-
-Dự án đã chạy thành công các bước huấn luyện và demo. Một số kết quả thực tế được lưu trong thư mục outputs như sau.
-
-### 8.1. Kết quả huấn luyện ANN
-
-| Mô hình | Số dòng train | Số dòng validation | Số dòng test | Epoch chạy | Test MSE | Test MAE |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Underfit | 70,000 | 15,000 | 15,000 | 5 | 16.253 | 2.619 |
-| Overfit | 3,000 | 15,000 | 15,000 | 150 | 22.276 | 2.747 |
-| Good fit | 70,000 | 15,000 | 15,000 | 15 | 14.416 | 2.268 |
-
-Nhận xét:
-- Underfit cho thấy mô hình quá nhỏ và học chưa đủ, nên sai số vẫn còn cao.
-- Overfit cho thấy mô hình học rất tốt trên dữ liệu huấn luyện nhưng không tổng quát hóa tốt trên dữ liệu test.
-- Good fit cho kết quả tốt nhất, với MAE thấp nhất trên tập test.
-
-### 8.2. Kết quả cross-validation
-
-Đã chạy 5-fold cross-validation với các kết quả sau:
-
-| Fold | Số dòng validation | MAE | MSE |
-| --- | ---: | ---: | ---: |
-| 1 | 20,000 | 2.245 | 15.241 |
-| 2 | 20,000 | 2.292 | 15.139 |
-| 3 | 20,000 | 2.208 | 14.751 |
-| 4 | 20,000 | 2.206 | 14.018 |
-| 5 | 20,000 | 2.465 | 14.373 |
-
-- MAE trung bình: 2.283
-- MSE trung bình: 14.704
-
-### 8.3. Kết quả demo so sánh thuật toán
-
-Trong một ví dụ demo cụ thể, các thuật toán được chạy trên cùng một mê cung với:
-- Start: $(17, 1)$
-- Goal: $(7, 7)$
-
-| Thuật toán | Tìm thấy đường | Độ dài đường đi | Số node đã duyệt | Thời gian |
-| --- | --- | ---: | ---: | ---: |
-| BFS | Có | 20 | 104 | 0.09 ms |
-| A* + Manhattan | Có | 20 | 46 | 0.06 ms |
-| A* + ANN | Có | 20 | 33 | 681.70 ms |
-
-Nhận xét quan trọng:
-- Ba thuật toán đều tìm được đường đi đúng với cùng độ dài 20 bước.
-- A* + Manhattan duyệt ít node hơn BFS.
-- A* + ANN duyệt ít node nhất trong ví dụ này, cho thấy heuristic học được có thể giúp giảm số lượng nút mở rộng.
-- Tuy nhiên, thời gian chạy của A* + ANN cao hơn do overhead của việc gọi model Keras tại mỗi bước đánh giá heuristic.
-
-### 8.4. Các file kết quả được sinh ra
-
-- outputs/underfit_loss.png
-- outputs/overfit_loss.png
-- outputs/goodfit_loss.png
-- outputs/demo_path.png
-- outputs/training_summary.json
-- outputs/cross_validation.json
-- outputs/demo_metrics.json
-
-## 9. Hình ảnh và biểu đồ minh họa
-
-Dự án đã sinh ra các file hình ảnh trực quan để bạn có thể dùng cho báo cáo, slide hoặc thuyết trình. Các biểu đồ này nằm trong thư mục outputs và có thể mở trực tiếp bằng bất kỳ trình xem ảnh nào.
-
-### 9.1. Biểu đồ huấn luyện cho từng mô hình
-
-![Underfit loss curve](outputs/underfit_loss.png)
-
-- [outputs/underfit_loss.png](outputs/underfit_loss.png): biểu đồ loss và MAE của mô hình underfit. Thường cho thấy train/validation đều khá cao và không ổn định.
-
-![Overfit loss curve](outputs/overfit_loss.png)
-
-- [outputs/overfit_loss.png](outputs/overfit_loss.png): biểu đồ loss và MAE của mô hình overfit. Train loss giảm mạnh, nhưng validation/test không cải thiện tốt như kỳ vọng.
-
-![Goodfit loss curve](outputs/goodfit_loss.png)
-
-- [outputs/goodfit_loss.png](outputs/goodfit_loss.png): biểu đồ loss và MAE của mô hình goodfit. Đây là mô hình cho kết quả tốt nhất, với đường train và validation gần nhau hơn.
-
-### 9.2. Hình minh họa đường đi trên mê cung
-
-![Maze search demo](outputs/demo_path.png)
-
-- [outputs/demo_path.png](outputs/demo_path.png): hình ảnh minh họa đường đi tìm được bởi các thuật toán BFS, A* + Manhattan và A* + ANN trên cùng một mê cung.
-
-### 9.3. Cách đọc các biểu đồ
-
-- Trục hoành: số epoch.
-- Trục tung: giá trị loss hoặc MAE.
-- Nếu đường train giảm liên tục nhưng validation tăng hoặc dao động, mô hình có dấu hiệu overfitting.
-- Nếu cả train và validation đều cao, mô hình có thể underfit.
-- Nếu train và validation đều giảm và tiến gần nhau, đó là dấu hiệu của mô hình good fit.
-
-## 10. Lưu ý quan trọng
-
-Thông tin quan trọng khi trình bày hoặc viết báo cáo là:
-
-> ANN không phải lúc nào cũng tốt hơn heuristic Manhattan. Nó là một heuristic học từ dữ liệu và có thể cải thiện hiệu quả trong một số trường hợp, nhưng không đảm bảo luôn tối ưu hoặc luôn hợp lệ như một heuristic admissible.
-
-Đây là điểm đáng chú ý vì heuristic Manhattan có tính chất hợp lệ trong mê cung 4 hướng không có trọng số, trong khi heuristic do ANN học có thể ước lượng sai hoặc overestimate.
-
-## 10. Ứng dụng và ý nghĩa
-
-Dự án này phù hợp để minh họa các khái niệm sau trong môn nhập môn trí tuệ nhân tạo:
-- mạng nơ-ron nhân tạo
-- huấn luyện, validation, test
-- overfitting và underfitting
-- hàm mất mát và metric đánh giá
-- cross-validation
-- ứng dụng học máy vào thuật toán tìm kiếm cổ điển
-
-## 11. Gợi ý phát triển tiếp
-
-Có thể mở rộng dự án theo các hướng sau:
-- dùng nhiều loại mê cung phức tạp hơn
-- thêm heuristic học sâu hoặc gradient boosting
-- so sánh với thuật toán Weighted A*
-- xây dựng giao diện trực quan để xem đường đi từng bước
+Kết quả sẽ xuất ra terminal dạng bảng metrics và lưu hình ảnh vào `outputs/demo_path.png`.
 
 ---
 
-Nếu bạn đang sử dụng dự án cho bài thuyết trình, README này có thể làm nền tảng cho phần giới thiệu, phương pháp, kết quả và nhận xét chuyên sâu.
+## 📊 7. Kết quả & Đánh giá (Results & Evaluation)
+
+### 7.1. Phân tích quá trình Huấn luyện (Training Analysis)
+
+Qua biểu đồ Loss và Metric MAE, ta có thể thấy rõ sự khác biệt của 3 cách tiếp cận:
+
+<div align="center">
+  <table style="text-align:center;">
+    <tr>
+      <td><b>Underfit</b></td>
+      <td><b>Overfit</b></td>
+      <td><b>Goodfit</b></td>
+    </tr>
+    <tr>
+      <td><img src="outputs/underfit_loss.png" alt="Underfit" width="250"/></td>
+      <td><img src="outputs/overfit_loss.png" alt="Overfit" width="250"/></td>
+      <td><img src="outputs/goodfit_loss.png" alt="Goodfit" width="250"/></td>
+    </tr>
+    <tr>
+      <td><i>Loss giảm ít, MAE dừng ở mức cao (~2.6). Mô hình không thể học biểu diễn hàm học phức tạp của mê cung.</i></td>
+      <td><i>Train Loss giảm gần bằng 0 nhưng Val Loss tăng vọt. Mô hình "ghi nhớ" thuộc lòng tập train, sai bét trên dữ liệu mới.</i></td>
+      <td><i>Train và Val Loss cùng giảm đều và hội tụ sát nhau (MAE ~2.2). Dấu hiệu của một mô hình học khái quát tốt.</i></td>
+    </tr>
+  </table>
+</div>
+
+### 7.2. Kết quả Cross-Validation (Mô hình Goodfit)
+*Trung bình sau 5 folds:*
+- **MAE**: ~2.283 (Sai số trung bình khoảng 2.2 bước đi)
+- **MSE**: ~14.704
+
+### 7.3. So sánh Thuật toán (Demo Path)
+
+Kết quả khi đưa 3 thuật toán vào chạy chung một màn chơi:
+- **Khởi điểm (Start)**: `(17, 1)`
+- **Đích đến (Goal)**: `(7, 7)`
+
+| Thuật toán | Tìm thấy đường | Chiều dài đường đi | Số Node Mở Rộng | Thời gian chạy |
+| :--- | :---: | :---: | :---: | :---: |
+| **BFS** | ✅ | 20 | 104 | ~0.09 ms |
+| **A* + Manhattan** | ✅ | 20 | 46 | ~0.06 ms |
+| **A* + ANN (Goodfit)** | ✅ | 20 | **33** | ~681.70 ms* |
+
+*(Ghi chú: Thời gian của ANN cao hơn do quá trình Infer qua model Keras cho từng node tốn nhiều overhead hơn tính toán biểu thức toán học. Trong thực tế để tối ưu thời gian, có thể dùng TensorRT, ONNX hoặc batch inference.)*
+
+**Hình ảnh Demo kết quả tìm đường:**
+
+<p align="center">
+  <img src="outputs/demo_path.png" alt="Demo Path Comparison" width="600"/>
+</p>
+<p align="center"><i>(Đường màu xanh mô tả lộ trình tìm được. Số lượng ô màu nhạt xung quanh biểu thị số lượng Node đã bị thuật toán mở rộng (explore))</i></p>
+
+**Nhận xét:**
+- **BFS** duyệt một lượng lớn node vì nó tìm kiếm mù theo mọi hướng.
+- **A* Manhattan** định hướng tốt hơn, giảm hơn 50% số node so với BFS.
+- **A* ANN** cho hiệu quả định hướng cực tốt, **số node cần duyệt là ít nhất**. Hàm Heuristic ANN đã nhận biết được các bức tường từ xa và dẫn đường đi hiệu quả.
+
+---
+
+## 📚 8. Ứng dụng & Hướng Phát Triển (Future Work)
+
+**Ý nghĩa:** Dự án này là công cụ giảng dạy/học tập cực tốt để giải thích vì sao cần Machine Learning, tác hại của Underfit/Overfit, và vai trò của Heuristic trong Trí tuệ nhân tạo (AI).
+
+**Gợi ý phát triển tiếp:**
+- Huấn luyện với mê cung kích thước đa dạng và phức tạp hơn (ví dụ Maze sinh bởi thuật toán DFS, Prim).
+- Áp dụng mạng **CNN (Convolutional Neural Network)** nhận đầu vào trực tiếp là ảnh/ma trận mê cung 2D cục bộ thay vì vector 1D thủ công.
+- Export mô hình sang `.tflite` hoặc `ONNX` để tăng tốc độ inference, khắc phục điểm yếu thời gian chạy của ANN so với Manhattan.
+- So sánh thêm với biến thể **Weighted A***.
+- Xây dựng giao diện Web/GUI (Pygame/Streamlit) để người dùng có thể tự vẽ tường và xem thuật toán chạy trực tiếp.
+
+---
+*Dự án thực hiện nhằm mục đích học tập & nghiên cứu thuật toán AI cơ bản. Chúc bạn có những trải nghiệm thú vị khi khám phá kết hợp giữa Search Algorithms và Machine Learning!*
