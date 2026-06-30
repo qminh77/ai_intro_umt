@@ -245,11 +245,21 @@ Dự án đã sinh ra các file hình ảnh trực quan để bạn có thể d�
 
 ### 9.1. Biểu đồ huấn luyện cho từng mô hình
 
+![Underfit loss curve](outputs/underfit_loss.png)
+
 - [outputs/underfit_loss.png](outputs/underfit_loss.png): biểu đồ loss và MAE của mô hình underfit. Thường cho thấy train/validation đều khá cao và không ổn định.
+
+![Overfit loss curve](outputs/overfit_loss.png)
+
 - [outputs/overfit_loss.png](outputs/overfit_loss.png): biểu đồ loss và MAE của mô hình overfit. Train loss giảm mạnh, nhưng validation/test không cải thiện tốt như kỳ vọng.
+
+![Goodfit loss curve](outputs/goodfit_loss.png)
+
 - [outputs/goodfit_loss.png](outputs/goodfit_loss.png): biểu đồ loss và MAE của mô hình goodfit. Đây là mô hình cho kết quả tốt nhất, với đường train và validation gần nhau hơn.
 
 ### 9.2. Hình minh họa đường đi trên mê cung
+
+![Maze search demo](outputs/demo_path.png)
 
 - [outputs/demo_path.png](outputs/demo_path.png): hình ảnh minh họa đường đi tìm được bởi các thuật toán BFS, A* + Manhattan và A* + ANN trên cùng một mê cung.
 
