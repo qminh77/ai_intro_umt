@@ -1,0 +1,777 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage{fontspec}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{unicode-math}
+\usepackage{setspace}
+\usepackage{longtable}
+\usepackage{listings}
+\usepackage{tikz}
+\usepackage[most]{tcolorbox}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric}
+
+\geometry{top=2.2cm,bottom=2.2cm,left=2.3cm,right=2.3cm}
+\setmainfont{texgyrepagella}[
+    Extension=.otf,
+    UprightFont=*-regular,
+    BoldFont=*-bold,
+    ItalicFont=*-italic,
+    BoldItalicFont=*-bolditalic,
+    Ligatures=TeX
+]
+\setsansfont{texgyrepagella}[
+    Extension=.otf,
+    UprightFont=*-regular,
+    BoldFont=*-bold,
+    ItalicFont=*-italic,
+    BoldItalicFont=*-bolditalic,
+    Ligatures=TeX
+]
+\setmonofont{texgyrecursor}[
+    Extension=.otf,
+    UprightFont=*-regular,
+    BoldFont=*-bold,
+    ItalicFont=*-italic,
+    BoldItalicFont=*-bolditalic,
+    Scale=0.95
+]
+\setmathfont{texgyrepagella-math.otf}
+\setstretch{1.13}
+\setlength{\parskip}{5pt}
+\setlength{\parindent}{0pt}
+\setlength{\headheight}{25pt}
+\renewcommand{\contentsname}{Mục lục}
+\renewcommand{\figurename}{Hình}
+\renewcommand{\tablename}{Bảng}
+
+\definecolor{Primary}{HTML}{1F4E79}
+\definecolor{Accent}{HTML}{2F75B5}
+\definecolor{SoftBlue}{HTML}{EAF3F8}
+\definecolor{SoftGray}{HTML}{F5F6F7}
+\definecolor{SoftGreen}{HTML}{EAF6EF}
+\definecolor{SoftAmber}{HTML}{FFF6E5}
+\definecolor{LineGray}{HTML}{D8DEE6}
+\definecolor{DarkGray}{HTML}{333333}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=Primary,
+    urlcolor=Accent,
+    citecolor=Primary,
+    pdfauthor={To Linh},
+    pdftitle={Ung dung ANN lam ham heuristic cho A* trong bai toan tim duong me cung}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\sffamily\small Ứng dụng ANN trong tìm đường mê cung}
+\rhead{\sffamily\small Nhóm Tờ Linh}
+\cfoot{\sffamily\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{Primary}\leaders\hrule height \headrulewidth\hfill}}
+
+\titleformat{\section}
+  {\sffamily\Large\bfseries\color{Primary}}
+  {\thesection}{0.8em}{}
+\titleformat{\subsection}
+  {\sffamily\large\bfseries\color{DarkGray}}
+  {\thesubsection}{0.7em}{}
+\titleformat{\subsubsection}
+  {\sffamily\normalsize\bfseries\color{DarkGray}}
+  {\thesubsubsection}{0.6em}{}
+
+\captionsetup{
+    font=small,
+    labelfont={bf,color=Primary},
+    justification=centering
+}
+
+\setlist[itemize]{topsep=3pt,itemsep=2pt,leftmargin=1.2cm}
+\setlist[enumerate]{topsep=3pt,itemsep=2pt,leftmargin=1.2cm}
+
+\lstdefinestyle{codebox}{
+    basicstyle=\ttfamily\small,
+    backgroundcolor=\color{SoftGray},
+    frame=single,
+    rulecolor=\color{Primary!35},
+    breaklines=true,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false
+}
+\lstset{style=codebox}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+\newtcolorbox{infobox}[1]{
+    colback=SoftBlue,
+    colframe=Primary,
+    title=\sffamily\bfseries #1,
+    fonttitle=\color{white},
+    coltitle=white,
+    arc=2mm,
+    boxrule=0.7pt,
+    left=6pt,
+    right=6pt,
+    top=6pt,
+    bottom=6pt
+}
+
+\newtcolorbox{keybox}[1]{
+    enhanced,
+    colback=white,
+    colframe=LineGray,
+    title=\sffamily\bfseries #1,
+    fonttitle=\color{Primary},
+    coltitle=Primary,
+    colbacktitle=white,
+    arc=1mm,
+    boxrule=0.5pt,
+    borderline west={2.2pt}{0pt}{Primary},
+    left=8pt,
+    right=8pt,
+    top=7pt,
+    bottom=7pt
+}
+
+\newtcolorbox{resultbox}[1]{
+    enhanced,
+    colback=SoftGreen,
+    colframe=Accent,
+    title=\sffamily\bfseries #1,
+    fonttitle=\color{white},
+    coltitle=white,
+    arc=1mm,
+    boxrule=0.6pt,
+    left=8pt,
+    right=8pt,
+    top=7pt,
+    bottom=7pt
+}
+
+\newcommand{\projectroot}{..}
+\newcommand{\imgdir}{../outputs}
+
+\begin{document}
+
+\begin{titlepage}
+    \thispagestyle{empty}
+    \centering
+
+    \vspace*{0.45cm}
+    \begin{minipage}{0.92\textwidth}
+        \centering
+        {\sffamily\bfseries\fontsize{13.8}{18}\selectfont
+        TRƯỜNG ĐẠI HỌC QUẢN LÝ VÀ CÔNG NGHỆ\\
+        THÀNH PHỐ HỒ CHÍ MINH\par}
+        \vspace{0.35cm}
+        {\color{Primary}\rule{0.74\textwidth}{0.9pt}\par}
+        \vspace{0.25cm}
+        {\sffamily\fontsize{12.2}{15}\selectfont HỌC PHẦN: NHẬP MÔN TRÍ TUỆ NHÂN TẠO\par}
+    \end{minipage}
+
+    \vspace{2.1cm}
+
+    \begin{tcolorbox}[
+        enhanced,
+        colback=white,
+        colframe=Primary,
+        width=0.88\textwidth,
+        arc=1mm,
+        boxrule=0.9pt,
+        left=18pt,
+        right=18pt,
+        top=22pt,
+        bottom=22pt,
+        borderline north={2.3pt}{0pt}{Primary},
+        borderline south={0.5pt}{0pt}{Primary!45}
+    ]
+        \centering
+        {\sffamily\bfseries\color{Primary}\fontsize{15}{18}\selectfont BÁO CÁO ĐỀ TÀI\par}
+        \vspace{0.45cm}
+        {\sffamily\bfseries\fontsize{20}{26}\selectfont
+        Ứng dụng mạng nơ-ron nhân tạo làm hàm heuristic cho thuật toán A* trong bài toán tìm đường mê cung\par}
+        \vspace{0.5cm}
+        {\color{Primary!55}\rule{0.58\textwidth}{0.5pt}\par}
+        \vspace{0.35cm}
+        {\sffamily\fontsize{11.5}{14}\selectfont Artificial Neural Network Heuristic for A* Maze Pathfinding\par}
+    \end{tcolorbox}
+
+    \vspace{1.35cm}
+
+    \begin{tcolorbox}[
+        colback=SoftGray,
+        colframe=Primary!75,
+        width=0.78\textwidth,
+        arc=1mm,
+        boxrule=0.7pt,
+        left=18pt,
+        right=18pt,
+        top=12pt,
+        bottom=12pt
+    ]
+        \sffamily
+        \newcommand{\coverrow}[2]{%
+            \noindent
+            \begin{minipage}[t]{0.30\textwidth}
+                {\bfseries\color{DarkGray}#1}
+            \end{minipage}
+            \hfill
+            \begin{minipage}[t]{0.64\textwidth}
+                #2
+            \end{minipage}\par
+        }
+        \coverrow{Nhóm thực hiện}{Tờ Linh}
+        \vspace{0.28cm}
+        \coverrow{Thành viên}{Nguyễn Quốc Minh\\[0.18cm]Võ Nguyễn Tấn Tài}
+        \vspace{0.28cm}
+        \coverrow{Sản phẩm}{Source code, dataset, model, biểu đồ, demo}
+    \end{tcolorbox}
+
+    \vfill
+    {\color{Primary}\rule{0.58\textwidth}{0.55pt}\par}
+    \vspace{0.22cm}
+    {\sffamily\fontsize{12}{15}\selectfont Thành phố Hồ Chí Minh, 2026\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\section*{Tóm tắt}
+\addcontentsline{toc}{section}{Tóm tắt}
+
+Đề tài xây dựng một hệ thống tìm đường trong mê cung bằng cách kết hợp thuật toán tìm kiếm truyền thống với mạng nơ-ron nhân tạo (Artificial Neural Network - ANN). Thay vì chỉ dùng khoảng cách Manhattan làm heuristic cho thuật toán A*, nhóm huấn luyện ANN để dự đoán chi phí còn lại từ vị trí hiện tại đến đích. Nhãn huấn luyện được tạo tự động bằng BFS, vì BFS cho khoảng cách ngắn nhất thật trong mê cung dạng lưới không trọng số.
+
+Project gồm các bước chính: sinh mê cung 20x20, tạo dataset bằng BFS, thiết kế ANN, thực hiện ba thí nghiệm underfitting, overfitting và good fit, sau đó tích hợp mô hình good fit vào A* để so sánh với BFS và A* dùng Manhattan. Kết quả thực nghiệm cho thấy mô hình good fit đạt Test MAE khoảng 2.268 bước. Trong demo cùng một mê cung, BFS duyệt 104 node, A* + Manhattan duyệt 46 node, còn A* + ANN duyệt 33 node với cùng độ dài đường đi là 20 bước.
+
+\begin{keybox}{Thông tin thực nghiệm chính}
+\begin{tabularx}{\linewidth}{>{\bfseries\color{Primary}}p{0.24\linewidth}Y}
+Dataset & 100,000 trạng thái được sinh từ 500 mê cung ngẫu nhiên kích thước 20x20. \\
+Input ANN & 10 đặc trưng gồm tọa độ, khoảng cách tương đối đến goal và vật cản cục bộ. \\
+Mô hình tốt nhất & Good fit, Test MSE = 14.416 và Test MAE = 2.268 bước. \\
+Demo tìm đường & A* + ANN duyệt 33 node, ít hơn A* + Manhattan 13 node và ít hơn BFS 71 node. \\
+\end{tabularx}
+\end{keybox}
+
+\begin{infobox}{Thông điệp chính}
+ANN không được trình bày như một phương pháp luôn thay thế hoàn toàn heuristic truyền thống. Trong đề tài này, ANN được dùng như một heuristic học từ dữ liệu để so sánh thực nghiệm với Manhattan. Vì ANN có thể dự đoán sai hoặc overestimate, nó không đảm bảo tối ưu tuyệt đối trong mọi trường hợp.
+\end{infobox}
+
+\section{Giới thiệu}
+
+\subsection{Bối cảnh bài toán}
+
+Tìm đường trong mê cung là một ví dụ trực quan của bài toán tìm kiếm trạng thái trong trí tuệ nhân tạo. Một tác nhân bắt đầu tại vị trí \(S\), cần đi đến vị trí \(G\), đồng thời tránh các ô tường. Mê cung được biểu diễn dưới dạng lưới hai chiều, mỗi ô có thể là đường đi hoặc vật cản.
+
+Các thuật toán truyền thống như BFS và A* có thể giải quyết bài toán này. BFS đảm bảo tìm đường ngắn nhất trong đồ thị không trọng số, nhưng thường duyệt nhiều trạng thái. A* cải thiện bằng cách dùng heuristic để ưu tiên các trạng thái có vẻ gần đích hơn. Với mê cung dạng lưới 4 hướng, heuristic Manhattan thường được dùng vì đơn giản và nhanh.
+
+Tuy nhiên, heuristic Manhattan chỉ đo khoảng cách theo tọa độ, không trực tiếp học từ cấu trúc vật cản của dữ liệu. Vì vậy, nhóm đặt câu hỏi: có thể dùng ANN để học một heuristic từ dữ liệu đường đi thật hay không?
+
+\subsection{Mục tiêu đề tài}
+
+Đề tài tập trung vào ba mục tiêu:
+
+\begin{enumerate}
+    \item Trình bày rõ cách ANN học, vai trò của tập train, validation, test, khái niệm epoch và các chỉ số đánh giá.
+    \item Thực nghiệm ba trạng thái học của mô hình: underfitting, overfitting và good fit.
+    \item Tích hợp ANN vào thuật toán A* như một hàm heuristic, sau đó so sánh với BFS và A* dùng Manhattan.
+\end{enumerate}
+
+\subsection{Câu hỏi nghiên cứu và đóng góp}
+
+Để đề tài không chỉ dừng ở việc chạy code minh họa, nhóm đặt ra các câu hỏi nghiên cứu sau:
+
+\begin{itemize}
+    \item ANN có học được mối quan hệ giữa trạng thái mê cung và khoảng cách ngắn nhất đến goal hay không?
+    \item Khi dùng ANN làm heuristic, A* có giảm số node phải duyệt so với BFS và A* + Manhattan trong demo hay không?
+    \item Ba hiện tượng underfitting, overfitting và good fit có thể được thể hiện rõ qua loss curve và chỉ số MAE hay không?
+\end{itemize}
+
+Đóng góp chính của project gồm pipeline tạo nhãn tự động bằng BFS, thiết kế ba cấu hình ANN có mục đích rõ ràng, lưu lại đầy đủ mô hình/biểu đồ/kết quả thực nghiệm và xây dựng demo so sánh trực tiếp giữa thuật toán cổ điển và heuristic học từ dữ liệu.
+
+\subsection{Phạm vi thực hiện}
+
+Mê cung trong project có kích thước 20x20. Agent chỉ được đi bốn hướng: lên, xuống, trái, phải. Dữ liệu được tạo tự động từ nhiều mê cung ngẫu nhiên. ANN được huấn luyện theo bài toán hồi quy, trong đó đầu ra là khoảng cách còn lại từ ô hiện tại đến đích.
+
+\section{Cơ sở lý thuyết}
+
+\subsection{Mạng nơ-ron nhân tạo}
+
+Mạng nơ-ron nhân tạo là một mô hình học máy gồm nhiều lớp tính toán. Một mạng cơ bản gồm:
+
+\begin{itemize}
+    \item \textbf{Input layer}: nhận vector đặc trưng của dữ liệu.
+    \item \textbf{Hidden layers}: học quan hệ phi tuyến giữa các đặc trưng.
+    \item \textbf{Output layer}: tạo kết quả dự đoán cuối cùng.
+\end{itemize}
+
+Trong project này, ANN nhận vào 10 đặc trưng mô tả trạng thái trong mê cung và trả về một số thực biểu diễn khoảng cách còn lại đến đích.
+
+Một neuron trong lớp ẩn thường tính:
+
+\[
+    z = w^T x + b,\qquad a = \phi(z)
+\]
+
+Trong đó \(x\) là vector đầu vào, \(w\) là trọng số, \(b\) là bias và \(\phi\) là hàm kích hoạt. Project sử dụng ReLU ở các lớp ẩn vì hàm này đơn giản, tính nhanh và giúp mô hình học quan hệ phi tuyến tốt hơn so với chỉ dùng biến đổi tuyến tính. Lớp output không dùng softmax vì đây không phải bài toán phân loại; mô hình cần dự đoán một giá trị khoảng cách dạng số thực.
+
+\subsection{Forward propagation và backpropagation}
+
+Quá trình học của ANN có thể hiểu theo hai pha chính. Ở pha \textbf{forward propagation}, dữ liệu đi từ lớp đầu vào qua các lớp ẩn để tạo dự đoán. Dự đoán này được so sánh với nhãn thật bằng một hàm mất mát.
+
+Ở pha \textbf{backpropagation}, sai số được truyền ngược qua mạng để tính mức độ ảnh hưởng của từng trọng số. Sau đó, thuật toán tối ưu như Adam cập nhật trọng số nhằm giảm loss ở các lần học tiếp theo.
+
+\subsection{Epoch, loss và quá trình học}
+
+Một epoch là một lần mô hình học qua toàn bộ tập training. Nếu số epoch quá ít hoặc mô hình quá nhỏ, mô hình có thể chưa học đủ quy luật của dữ liệu. Đây là underfitting. Ngược lại, nếu mô hình quá lớn và train quá lâu trên dữ liệu hạn chế, mô hình có thể ghi nhớ dữ liệu train thay vì học quy luật tổng quát. Đây là overfitting.
+
+Đồ thị loss qua các epoch là công cụ quan trọng để quan sát quá trình học:
+
+\begin{itemize}
+    \item Train loss và validation loss đều cao: mô hình có thể underfit.
+    \item Train loss giảm mạnh nhưng validation loss tăng hoặc dao động xấu: mô hình có thể overfit.
+    \item Train loss và validation loss cùng giảm rồi ổn định: mô hình có xu hướng fit tốt hơn.
+\end{itemize}
+
+\subsection{Training set, validation set và testing set}
+
+Dữ liệu được chia thành ba phần:
+
+\begin{itemize}
+    \item \textbf{Training set}: dùng để cập nhật trọng số của ANN.
+    \item \textbf{Validation set}: dùng để theo dõi mô hình trong quá trình học và chọn cấu hình.
+    \item \textbf{Testing set}: dùng để đánh giá cuối cùng sau khi đã chọn mô hình.
+\end{itemize}
+
+Trong project, tỉ lệ chia là 70/15/15. Validation set cần tách khỏi testing set để tránh việc mô hình hoặc người thiết kế vô tình điều chỉnh cấu hình theo kết quả test. Khi đó, test không còn phản ánh khách quan khả năng tổng quát của mô hình.
+
+\subsection{Các chỉ số đánh giá}
+
+Với bài toán phân loại, một số chỉ số thường gặp gồm:
+
+\begin{itemize}
+    \item \textbf{Accuracy}: tỉ lệ dự đoán đúng trên tổng số mẫu.
+    \item \textbf{ROC/AUC}: khả năng phân biệt giữa các lớp ở nhiều ngưỡng quyết định.
+    \item \textbf{Cross-validation}: cách chia dữ liệu thành nhiều fold để đánh giá độ ổn định.
+\end{itemize}
+
+Trong project này, ANN dự đoán khoảng cách còn lại, nên đây là bài toán hồi quy. Do đó, nhóm sử dụng:
+
+\begin{itemize}
+    \item \textbf{MSE}: sai số bình phương trung bình, phạt mạnh các dự đoán sai nhiều.
+    \item \textbf{MAE}: sai số tuyệt đối trung bình, dễ diễn giải vì đơn vị là số bước.
+\end{itemize}
+
+Hai chỉ số được tính theo công thức:
+
+\[
+    \text{MSE} = \frac{1}{n}\sum_{i=1}^{n}(y_i - \hat{y}_i)^2,
+    \qquad
+    \text{MAE} = \frac{1}{n}\sum_{i=1}^{n}|y_i - \hat{y}_i|
+\]
+
+Trong đó \(y_i\) là khoảng cách thật do BFS tạo ra và \(\hat{y}_i\) là khoảng cách do ANN dự đoán. MSE nhạy hơn với lỗi lớn, còn MAE dễ dùng khi thuyết trình vì có thể diễn giải trực tiếp là ``mô hình sai trung bình bao nhiêu bước''.
+
+Ví dụ, MAE = 2.268 nghĩa là mô hình dự đoán sai trung bình khoảng 2.268 bước.
+
+\subsection{BFS}
+
+BFS duyệt đồ thị theo từng lớp khoảng cách từ điểm bắt đầu. Trong mê cung không trọng số, BFS đảm bảo tìm được đường ngắn nhất nếu tồn tại đường đi. Nhược điểm là BFS không dùng thông tin hướng đến goal nên có thể duyệt nhiều trạng thái.
+
+Trong project, BFS có hai vai trò:
+
+\begin{enumerate}
+    \item Tạo nhãn \texttt{true\_distance} cho dataset.
+    \item Là thuật toán baseline trong demo so sánh.
+\end{enumerate}
+
+\subsection{Thuật toán A* và heuristic}
+
+A* đánh giá mỗi trạng thái bằng công thức:
+
+\[
+    f(n) = g(n) + h(n)
+\]
+
+Trong đó:
+
+\begin{itemize}
+    \item \(g(n)\): chi phí đã đi từ start đến node hiện tại.
+    \item \(h(n)\): chi phí ước lượng từ node hiện tại đến goal.
+    \item \(f(n)\): tổng chi phí dự đoán.
+\end{itemize}
+
+Heuristic Manhattan được tính bằng:
+
+\[
+    h(n) = |x - x_g| + |y - y_g|
+\]
+
+Với lưới 4 hướng không trọng số, Manhattan là heuristic đơn giản, nhanh và thường hiệu quả. Ý tưởng của đề tài là thay \(h(n)\) bằng \(h_{\text{ANN}}(n)\), tức giá trị dự đoán từ mạng ANN.
+
+\begin{keybox}{Vai trò của heuristic trong đề tài}
+Heuristic không trực tiếp tạo đường đi. Nó chỉ quyết định thứ tự ưu tiên mở rộng node trong A*. Nếu heuristic gần với khoảng cách thật, A* thường duyệt ít node hơn. Nếu heuristic sai nhiều, thuật toán có thể duyệt thừa node hoặc mất tính đảm bảo tối ưu nếu heuristic overestimate.
+\end{keybox}
+
+\section{Thiết kế hệ thống và thiết kế ANN}
+
+\subsection{Tổng quan kiến trúc}
+
+Hệ thống được chia thành các module rõ ràng:
+
+\begin{itemize}
+    \item \texttt{maze.py}: sinh mê cung và xử lý ô lưới.
+    \item \texttt{search.py}: cài đặt BFS, A* và Manhattan heuristic.
+    \item \texttt{dataset.py}: sinh dataset có nhãn bằng BFS.
+    \item \texttt{features.py}: chuyển trạng thái mê cung thành vector đặc trưng.
+    \item \texttt{models.py}: định nghĩa ba cấu hình ANN.
+    \item \texttt{train.py}: train underfit, overfit và good fit.
+    \item \texttt{demo.py}: so sánh BFS, A* + Manhattan và A* + ANN.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=1.15cm and 1.05cm,
+    flowstep/.style={
+        rectangle,
+        rounded corners=1mm,
+        draw=Primary!75,
+        fill=SoftBlue,
+        minimum width=3.2cm,
+        minimum height=1.0cm,
+        align=center,
+        font=\sffamily\small
+    },
+    arrow/.style={-{Latex[length=2.3mm]}, thick, draw=Primary!75}
+]
+    \node[flowstep] (maze) {Sinh mê cung\\20x20};
+    \node[flowstep, right=of maze] (bfs) {BFS từ goal\\tạo nhãn thật};
+    \node[flowstep, right=of bfs] (csv) {Dataset CSV\\100,000 dòng};
+    \node[flowstep, below=of csv] (train) {Train ANN\\3 cấu hình};
+    \node[flowstep, left=of train] (astar) {A* + ANN\\heuristic học};
+    \node[flowstep, left=of astar] (compare) {So sánh\\BFS, A*};
+
+    \draw[arrow] (maze) -- (bfs);
+    \draw[arrow] (bfs) -- (csv);
+    \draw[arrow] (csv) -- (train);
+    \draw[arrow] (train) -- (astar);
+    \draw[arrow] (astar) -- (compare);
+\end{tikzpicture}
+\caption{Pipeline tổng quát của project}
+\end{figure}
+
+\subsection{Biểu diễn mê cung}
+
+Mê cung là ma trận 20x20:
+
+\begin{lstlisting}
+0 = duong di
+1 = tuong / vat can
+S = diem bat dau
+G = diem dich
+\end{lstlisting}
+
+Agent có thể đi bốn hướng. Một bước di chuyển giữa hai ô kề nhau có chi phí bằng 1.
+
+\subsection{Tạo dataset bằng BFS}
+
+Với mỗi mê cung ngẫu nhiên, hệ thống chọn một goal rồi chạy BFS từ goal để tính khoảng cách ngắn nhất đến mọi ô reachable. Nhờ chạy BFS từ goal, ta thu được nhãn cho nhiều trạng thái trong cùng một lần duyệt.
+
+Quy trình tạo dataset:
+
+\begin{enumerate}
+    \item Sinh 500 mê cung ngẫu nhiên kích thước 20x20.
+    \item Với mỗi mê cung, chọn goal hợp lệ.
+    \item Dùng BFS tính khoảng cách thật từ mọi ô reachable đến goal.
+    \item Trích xuất tối đa 200 trạng thái mỗi mê cung.
+    \item Lưu thành file \texttt{data/maze\_dataset.csv}.
+\end{enumerate}
+
+Dataset thu được có 100,000 dòng.
+
+\begin{table}[H]
+\centering
+\caption{Thông số dataset và cách chia dữ liệu}
+\begin{tabularx}{0.92\textwidth}{>{\bfseries\raggedright\arraybackslash}p{0.34\textwidth}Y}
+\toprule
+Thành phần & Giá trị sử dụng trong project \\
+\midrule
+Số mê cung sinh dữ liệu & 500 mê cung \\
+Kích thước mỗi mê cung & 20x20 ô \\
+Tỉ lệ tường khi sinh ngẫu nhiên & 0.25 \\
+Số mẫu tối đa mỗi mê cung & 200 trạng thái reachable \\
+Tổng số dòng dataset & 100,000 dòng \\
+Tỉ lệ train/validation/test & 70\% / 15\% / 15\% \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Thiết kế input và output của ANN}
+
+Mỗi mẫu dữ liệu tương ứng với một trạng thái trong mê cung. Vector input gồm 10 đặc trưng:
+
+\begin{table}[H]
+\centering
+\caption{Các đặc trưng đầu vào của ANN}
+\begin{tabularx}{0.96\textwidth}{>{\bfseries\raggedright\arraybackslash}p{0.26\textwidth}Y}
+\toprule
+Đặc trưng & Ý nghĩa \\
+\midrule
+\texttt{x}, \texttt{y} & Tọa độ hiện tại của agent, đã chuẩn hóa theo kích thước mê cung. \\
+\texttt{goal\_x}, \texttt{goal\_y} & Tọa độ điểm đích, đã chuẩn hóa. \\
+\texttt{dx}, \texttt{dy} & Khoảng cách tuyệt đối theo hai trục giữa vị trí hiện tại và goal. \\
+\texttt{up\_wall} & Ô phía trên là tường hoặc nằm ngoài biên. \\
+\texttt{down\_wall} & Ô phía dưới là tường hoặc nằm ngoài biên. \\
+\texttt{left\_wall} & Ô bên trái là tường hoặc nằm ngoài biên. \\
+\texttt{right\_wall} & Ô bên phải là tường hoặc nằm ngoài biên. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Output của ANN là:
+
+\begin{lstlisting}
+true_distance = so buoc ngan nhat tu o hien tai den goal
+\end{lstlisting}
+
+Đây là bài toán hồi quy vì mô hình dự đoán một giá trị số thực.
+
+Nhóm chọn các đặc trưng đầu vào theo hướng vừa đủ cho một mô hình nhập môn: tọa độ cho biết vị trí tuyệt đối, \texttt{dx}/\texttt{dy} giữ lại thông tin gần giống Manhattan, còn bốn biến tường lân cận cung cấp tín hiệu về vật cản xung quanh. Cách thiết kế này giúp báo cáo dễ giải thích và đủ để minh họa ý tưởng heuristic học từ dữ liệu.
+
+\subsection{Ba cấu hình ANN}
+
+Nhóm thiết kế ba mô hình để minh họa ba hiện tượng học.
+
+\begin{table}[H]
+\centering
+\caption{Thiết kế các mô hình ANN}
+\begin{tabularx}{0.98\textwidth}{>{\bfseries\raggedright\arraybackslash}p{0.13\textwidth}YY}
+\toprule
+Mô hình & Cấu hình & Mục đích \\
+\midrule
+Underfit & Dense(4) + output, 5 epoch & Mạng quá nhỏ, học chưa đủ. \\
+Overfit & Dense(512), Dense(512), Dense(256), Dense(128), output, 150 epoch, chỉ dùng 3,000 dòng train & Mạng lớn và train lâu trên ít dữ liệu để tạo overfitting. \\
+Good fit & Dense(64), Dropout(0.2), Dense(32), Dense(16), output, \mbox{EarlyStopping} & Mạng vừa phải, có kiểm soát overfitting. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Cả ba mô hình dùng optimizer Adam, loss MSE và metric MAE. Mô hình good fit dùng cơ chế dừng sớm theo \texttt{val\_loss} để dừng khi validation loss không cải thiện.
+
+\begin{keybox}{Nguyên tắc thiết kế mô hình}
+Underfit và overfit được cố ý thiết kế để minh họa hai lỗi học máy thường gặp. Mô hình good fit mới là cấu hình chính dùng cho demo. Cách bố trí này giúp báo cáo thể hiện đầy đủ quá trình thử nghiệm: không chỉ đưa ra mô hình tốt nhất, mà còn giải thích vì sao các cấu hình khác chưa phù hợp.
+\end{keybox}
+
+\section{Thí nghiệm}
+
+\subsection{Môi trường và dữ liệu}
+
+Project được thực hiện bằng Python, TensorFlow/Keras, NumPy, Pandas và Matplotlib. Dataset gồm 100,000 dòng, chia thành:
+
+\begin{itemize}
+    \item 70,000 dòng train.
+    \item 15,000 dòng validation.
+    \item 15,000 dòng test.
+\end{itemize}
+
+Riêng thí nghiệm overfitting chỉ dùng 3,000 dòng train để làm hiện tượng học quá mức rõ hơn.
+
+\begin{table}[H]
+\centering
+\caption{Mục tiêu kiểm chứng của từng thí nghiệm}
+\begin{tabularx}{0.98\textwidth}{>{\bfseries\raggedright\arraybackslash}p{0.20\textwidth}YY}
+\toprule
+Thí nghiệm & Mục tiêu & Dấu hiệu cần quan sát \\
+\midrule
+Underfitting & Kiểm tra trường hợp mô hình quá đơn giản. & Train loss và validation loss còn cao, MAE chưa tốt. \\
+Overfitting & Kiểm tra trường hợp mô hình quá phức tạp trên ít dữ liệu. & Train loss giảm nhưng validation loss xấu hơn hoặc dao động. \\
+Good fit & Tìm cấu hình cân bằng hơn để dùng làm heuristic. & Validation loss ổn định, test MAE tốt nhất trong ba mô hình. \\
+Cross-validation & Kiểm tra độ ổn định qua nhiều lần chia dữ liệu. & MAE giữa các fold không chênh lệch quá lớn. \\
+Demo A* & Đánh giá tác động của ANN khi thay heuristic. & So sánh độ dài đường đi, số node duyệt và thời gian chạy. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Thí nghiệm 1: Underfitting}
+
+Mô hình underfit được thiết kế rất nhỏ và chỉ train 5 epoch. Kỳ vọng là mô hình không đủ năng lực học quan hệ giữa trạng thái mê cung và khoảng cách thật. Dấu hiệu cần quan sát là loss còn cao và MAE chưa tốt.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{\imgdir/underfit_loss.png}
+    \caption{Đồ thị loss và MAE của mô hình underfit}
+\end{figure}
+
+\subsection{Thí nghiệm 2: Overfitting}
+
+Mô hình overfit có nhiều layer và nhiều neuron hơn, nhưng chỉ train trên 3,000 dòng dữ liệu. Mục tiêu là quan sát việc train loss tiếp tục giảm trong khi validation loss không cải thiện tương ứng, thậm chí tăng hoặc dao động mạnh.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{\imgdir/overfit_loss.png}
+    \caption{Đồ thị loss và MAE của mô hình overfit}
+\end{figure}
+
+\subsection{Thí nghiệm 3: Good fit}
+
+Mô hình good fit dùng kiến trúc vừa phải, có Dropout và \mbox{EarlyStopping}. Cấu hình này nhằm giảm overfitting và đạt khả năng tổng quát tốt hơn trên tập test.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{\imgdir/goodfit_loss.png}
+    \caption{Đồ thị loss và MAE của mô hình good fit}
+\end{figure}
+
+\subsection{Thí nghiệm 4: Cross-validation}
+
+Để kiểm tra độ ổn định, nhóm chạy 5-fold cross-validation với mô hình good fit. Mỗi fold dùng 20,000 dòng làm validation và phần còn lại làm train. Kết quả trung bình giúp đánh giá mô hình ít phụ thuộc hơn vào một lần chia dữ liệu.
+
+\subsection{Thí nghiệm 5: Tích hợp ANN vào A*}
+
+Sau khi train, mô hình good fit được lưu thành \path{models/ann_heuristic_goodfit.keras}. Khi A* cần tính \(h(n)\), hệ thống chuyển trạng thái hiện tại thành vector input rồi gọi ANN để dự đoán khoảng cách còn lại.
+
+So sánh ba thuật toán:
+
+\begin{itemize}
+    \item BFS: không dùng heuristic.
+    \item A* + Manhattan: dùng khoảng cách Manhattan.
+    \item A* + ANN: dùng mô hình ANN làm heuristic.
+\end{itemize}
+
+\section{Kết quả}
+
+\subsection{Kết quả huấn luyện ANN}
+
+\begin{table}[H]
+\centering
+\caption{Kết quả test của ba mô hình ANN}
+\begin{tabular}{lrrrrrr}
+\toprule
+\textbf{Mô hình} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Epoch} & \textbf{Test MSE} & \textbf{Test MAE} \\
+\midrule
+Underfit & 70,000 & 15,000 & 15,000 & 5 & 16.253 & 2.619 \\
+Overfit & 3,000 & 15,000 & 15,000 & 150 & 22.276 & 2.747 \\
+Good fit & 70,000 & 15,000 & 15,000 & 15 & 14.416 & 2.268 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Mô hình good fit đạt Test MAE thấp nhất, khoảng 2.268 bước. Mô hình overfit tuy lớn hơn và train lâu hơn nhưng test MAE kém hơn, cho thấy việc tăng độ phức tạp không tự động làm mô hình tốt hơn.
+
+\begin{resultbox}{Kết quả nổi bật}
+So với underfit, mô hình good fit giảm Test MAE từ 2.619 xuống 2.268 bước, tương đương cải thiện khoảng 13.4\%. So với overfit, good fit cũng tốt hơn khoảng 17.4\% theo MAE. Điều này củng cố nhận xét rằng mô hình vừa phải, có regularization và dừng sớm phù hợp hơn với dataset của project.
+\end{resultbox}
+
+\subsection{Kết quả cross-validation}
+
+\begin{table}[H]
+\centering
+\caption{Kết quả 5-fold cross-validation}
+\begin{tabular}{rrrr}
+\toprule
+\textbf{Fold} & \textbf{Validation rows} & \textbf{MAE} & \textbf{MSE} \\
+\midrule
+1 & 20,000 & 2.245 & 15.241 \\
+2 & 20,000 & 2.292 & 15.139 \\
+3 & 20,000 & 2.208 & 14.751 \\
+4 & 20,000 & 2.206 & 14.018 \\
+5 & 20,000 & 2.465 & 14.373 \\
+\midrule
+\textbf{Trung bình} & - & \textbf{2.283} & \textbf{14.704} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+MAE trung bình 2.283 cho thấy mô hình có sai số tương đối ổn định qua nhiều fold. Fold 5 có MAE cao hơn một chút, có thể do tập validation trong fold đó chứa nhiều trạng thái khó hơn.
+
+\subsection{Kết quả demo tìm đường}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{\imgdir/demo_path.png}
+    \caption{So sánh đường đi của BFS, A* + Manhattan và A* + ANN}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{Kết quả so sánh thuật toán trên cùng một mê cung}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Thuật toán} & \textbf{Tìm thấy} & \textbf{Độ dài} & \textbf{Node duyệt} & \textbf{Thời gian} \\
+\midrule
+BFS & Có & 20 & 104 & 0.10 ms \\
+A* + Manhattan & Có & 20 & 46 & 0.07 ms \\
+A* + ANN & Có & 20 & 33 & 680.28 ms \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Trong demo này, cả ba thuật toán đều tìm được đường dài 20 bước. A* + Manhattan duyệt ít node hơn BFS. A* + ANN duyệt ít node nhất, cho thấy heuristic học từ dữ liệu có thể giúp thuật toán ưu tiên hướng tìm kiếm tốt hơn trong trường hợp cụ thể.
+
+Về số node duyệt, A* + ANN giảm khoảng 68.3\% so với BFS và khoảng 28.3\% so với A* + Manhattan trong mê cung demo. Độ dài đường đi vẫn giữ ở 20 bước, tức trong trường hợp này việc dùng ANN heuristic không làm đường đi dài hơn.
+
+Tuy vậy, thời gian chạy của A* + ANN cao hơn vì mỗi lần tính heuristic phải gọi mô hình Keras. Đây là overhead của cách demo bằng Python, không phải bằng chứng rằng ANN luôn kém về hiệu năng. Nếu triển khai batch prediction, cache mạnh hơn hoặc dùng runtime tối ưu, thời gian có thể được cải thiện.
+
+\section{Nhận xét}
+
+\subsection{Phân tích underfitting}
+
+Mô hình underfit có số tham số rất ít và chỉ train 5 epoch. Dù loss giảm nhanh ở các epoch đầu, sai số test vẫn còn cao. Điều này phù hợp với kỳ vọng: mô hình chưa đủ năng lực biểu diễn quan hệ giữa vị trí, vật cản cục bộ và khoảng cách thật.
+
+\subsection{Phân tích overfitting}
+
+Mô hình overfit có số tham số lớn hơn rất nhiều và train 150 epoch trên tập train nhỏ. Đồ thị cho thấy train loss tiếp tục giảm, nhưng validation loss tăng hoặc dao động rõ. Đây là dấu hiệu mô hình học quá kỹ dữ liệu train, dẫn đến khả năng tổng quát kém hơn.
+
+\subsection{Phân tích good fit}
+
+Mô hình good fit có kiến trúc vừa phải, thêm Dropout và \mbox{EarlyStopping}. Kết quả test tốt nhất trong ba mô hình với MAE khoảng 2.268 bước. Điều này cho thấy việc kiểm soát độ phức tạp và theo dõi validation loss quan trọng hơn việc chỉ tăng kích thước mô hình.
+
+\subsection{Nhận xét về ANN heuristic}
+
+ANN heuristic giúp A* duyệt ít node hơn trong demo, nhưng không nên kết luận ANN luôn tốt hơn Manhattan. Manhattan có ưu điểm đơn giản, nhanh và có tính chất lý thuyết tốt trong lưới 4 hướng. ANN có thể học thêm thông tin từ dữ liệu, nhưng cũng có thể dự đoán sai.
+
+Điểm quan trọng khi bảo vệ là: đề tài không khẳng định ANN thay thế hoàn toàn A*. ANN chỉ thay phần heuristic để tạo một biến thể A* + ANN và so sánh bằng thực nghiệm.
+
+Khi thuyết trình, nên nhấn mạnh sự khác nhau giữa hai loại đánh giá. MAE đánh giá chất lượng dự đoán khoảng cách của ANN trên dataset, còn số node duyệt đánh giá tác động của heuristic trong thuật toán A*. Một mô hình có MAE tốt thường có ích cho A*, nhưng hai chỉ số này không hoàn toàn tương đương vì A* còn phụ thuộc vào thứ tự ưu tiên node và cấu trúc cụ thể của mê cung.
+
+\subsection{Hạn chế}
+
+\begin{itemize}
+    \item Input của ANN chỉ quan sát bốn ô lân cận, chưa nhìn được toàn bộ cấu trúc mê cung.
+    \item ANN heuristic không đảm bảo admissible, nên không đảm bảo luôn tìm đường tối ưu trong mọi trường hợp.
+    \item Demo A* + ANN tốn thời gian do overhead gọi model nhiều lần.
+    \item Dataset được sinh ngẫu nhiên, chưa bao phủ hết mọi dạng mê cung khó.
+\end{itemize}
+
+\subsection{Hướng phát triển}
+
+\begin{itemize}
+    \item Mở rộng input thành cửa sổ 3x3 hoặc 5x5 quanh agent để ANN thấy nhiều vật cản hơn.
+    \item Train trên nhiều mê cung hơn và kiểm thử trên các mê cung có cấu trúc đặc biệt.
+    \item Batch các lần dự đoán ANN hoặc cache heuristic tốt hơn để giảm thời gian chạy.
+    \item So sánh thêm với Greedy Best-First Search hoặc các biến thể heuristic khác.
+\end{itemize}
+
+\section{Kết luận}
+
+Đề tài đã xây dựng một pipeline hoàn chỉnh từ sinh dữ liệu, huấn luyện ANN đến tích hợp vào thuật toán tìm kiếm. BFS được dùng để tạo nhãn khoảng cách thật, ANN học cách dự đoán chi phí còn lại, và mô hình good fit được dùng làm heuristic cho A*.
+
+Kết quả thực nghiệm chứng minh được ba hiện tượng học quan trọng của ANN: underfitting, overfitting và good fit. Trong demo tìm đường, A* + ANN duyệt ít node nhất trên mê cung được chọn, cho thấy heuristic học từ dữ liệu có tiềm năng hỗ trợ thuật toán tìm kiếm truyền thống.
+
+Tuy nhiên, ANN heuristic không đảm bảo tối ưu tuyệt đối như các heuristic có tính chất lý thuyết rõ ràng. Vì vậy, kết quả phù hợp nhất nên được hiểu là một minh họa cho sự kết hợp giữa AI hiện đại và thuật toán cổ điển, đồng thời là cơ sở để tiếp tục cải tiến mô hình và cách tích hợp.
+
+\end{document}

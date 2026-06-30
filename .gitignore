@@ -1,0 +1,13 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+data/*.csv
+models/*.keras
+models/*.h5
+outputs/*.csv
+outputs/*.json
+outputs/*.png
+outputs/*.txt
