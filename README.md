@@ -179,12 +179,65 @@ Demo sẽ so sánh:
 - A* + Manhattan
 - A* + ANN (nếu đã có model tốt)
 
-## 8. Kết quả mong đợi
+## 8. Kết quả thực nghiệm đã thu được
 
-Sau khi chạy xong, bạn sẽ thấy:
-- đồ thị loss/MAE cho các thí nghiệm underfit, overfit và goodfit
-- số lượng nút duyệt và thời gian chạy của từng thuật toán
-- hình ảnh minh họa đường đi tìm được trên mê cung
+Dự án đã chạy thành công các bước huấn luyện và demo. Một số kết quả thực tế được lưu trong thư mục outputs như sau.
+
+### 8.1. Kết quả huấn luyện ANN
+
+| Mô hình | Số dòng train | Số dòng validation | Số dòng test | Epoch chạy | Test MSE | Test MAE |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Underfit | 70,000 | 15,000 | 15,000 | 5 | 16.253 | 2.619 |
+| Overfit | 3,000 | 15,000 | 15,000 | 150 | 22.276 | 2.747 |
+| Good fit | 70,000 | 15,000 | 15,000 | 15 | 14.416 | 2.268 |
+
+Nhận xét:
+- Underfit cho thấy mô hình quá nhỏ và học chưa đủ, nên sai số vẫn còn cao.
+- Overfit cho thấy mô hình học rất tốt trên dữ liệu huấn luyện nhưng không tổng quát hóa tốt trên dữ liệu test.
+- Good fit cho kết quả tốt nhất, với MAE thấp nhất trên tập test.
+
+### 8.2. Kết quả cross-validation
+
+Đã chạy 5-fold cross-validation với các kết quả sau:
+
+| Fold | Số dòng validation | MAE | MSE |
+| --- | ---: | ---: | ---: |
+| 1 | 20,000 | 2.245 | 15.241 |
+| 2 | 20,000 | 2.292 | 15.139 |
+| 3 | 20,000 | 2.208 | 14.751 |
+| 4 | 20,000 | 2.206 | 14.018 |
+| 5 | 20,000 | 2.465 | 14.373 |
+
+- MAE trung bình: 2.283
+- MSE trung bình: 14.704
+
+### 8.3. Kết quả demo so sánh thuật toán
+
+Trong một ví dụ demo cụ thể, các thuật toán được chạy trên cùng một mê cung với:
+- Start: $(17, 1)$
+- Goal: $(7, 7)$
+
+| Thuật toán | Tìm thấy đường | Độ dài đường đi | Số node đã duyệt | Thời gian |
+| --- | --- | ---: | ---: | ---: |
+| BFS | Có | 20 | 104 | 0.09 ms |
+| A* + Manhattan | Có | 20 | 46 | 0.06 ms |
+| A* + ANN | Có | 20 | 33 | 681.70 ms |
+
+Nhận xét quan trọng:
+- Ba thuật toán đều tìm được đường đi đúng với cùng độ dài 20 bước.
+- A* + Manhattan duyệt ít node hơn BFS.
+- A* + ANN duyệt ít node nhất trong ví dụ này, cho thấy heuristic học được có thể giúp giảm số lượng nút mở rộng.
+- Tuy nhiên, thời gian chạy của A* + ANN cao hơn do overhead của việc gọi model Keras tại mỗi bước đánh giá heuristic.
+
+### 8.4. Các file kết quả được sinh ra
+
+- outputs/underfit_loss.png
+- outputs/overfit_loss.png
+- outputs/goodfit_loss.png
+- outputs/demo_path.png
+- outputs/training_summary.json
+- outputs/cross_validation.json
+- outputs/demo_metrics.json
 
 ## 9. Lưu ý quan trọng
 
