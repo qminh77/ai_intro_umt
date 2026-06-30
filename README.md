@@ -239,7 +239,29 @@ Nhận xét quan trọng:
 - outputs/cross_validation.json
 - outputs/demo_metrics.json
 
-## 9. Lưu ý quan trọng
+## 9. Hình ảnh và biểu đồ minh họa
+
+Dự án đã sinh ra các file hình ảnh trực quan để bạn có thể dùng cho báo cáo, slide hoặc thuyết trình. Các biểu đồ này nằm trong thư mục outputs và có thể mở trực tiếp bằng bất kỳ trình xem ảnh nào.
+
+### 9.1. Biểu đồ huấn luyện cho từng mô hình
+
+- [outputs/underfit_loss.png](outputs/underfit_loss.png): biểu đồ loss và MAE của mô hình underfit. Thường cho thấy train/validation đều khá cao và không ổn định.
+- [outputs/overfit_loss.png](outputs/overfit_loss.png): biểu đồ loss và MAE của mô hình overfit. Train loss giảm mạnh, nhưng validation/test không cải thiện tốt như kỳ vọng.
+- [outputs/goodfit_loss.png](outputs/goodfit_loss.png): biểu đồ loss và MAE của mô hình goodfit. Đây là mô hình cho kết quả tốt nhất, với đường train và validation gần nhau hơn.
+
+### 9.2. Hình minh họa đường đi trên mê cung
+
+- [outputs/demo_path.png](outputs/demo_path.png): hình ảnh minh họa đường đi tìm được bởi các thuật toán BFS, A* + Manhattan và A* + ANN trên cùng một mê cung.
+
+### 9.3. Cách đọc các biểu đồ
+
+- Trục hoành: số epoch.
+- Trục tung: giá trị loss hoặc MAE.
+- Nếu đường train giảm liên tục nhưng validation tăng hoặc dao động, mô hình có dấu hiệu overfitting.
+- Nếu cả train và validation đều cao, mô hình có thể underfit.
+- Nếu train và validation đều giảm và tiến gần nhau, đó là dấu hiệu của mô hình good fit.
+
+## 10. Lưu ý quan trọng
 
 Thông tin quan trọng khi trình bày hoặc viết báo cáo là:
 
