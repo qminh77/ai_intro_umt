@@ -255,13 +255,13 @@
 
 Đề tài xây dựng một hệ thống tìm đường trong mê cung bằng cách kết hợp thuật toán tìm kiếm truyền thống với mạng nơ-ron nhân tạo (Artificial Neural Network - ANN). Thay vì chỉ dùng khoảng cách Manhattan làm heuristic cho thuật toán A*, nhóm huấn luyện ANN để dự đoán chi phí còn lại từ vị trí hiện tại đến đích. Nhãn huấn luyện được tạo tự động bằng BFS, vì BFS cho khoảng cách ngắn nhất thật trong mê cung dạng lưới không trọng số.
 
-Project gồm các bước chính: sinh mê cung 20x20, tạo dataset bằng BFS, thiết kế ANN, thực hiện ba thí nghiệm underfitting, overfitting và good fit, sau đó tích hợp mô hình good fit vào A* để so sánh với BFS và A* dùng Manhattan. Kết quả thực nghiệm cho thấy mô hình good fit đạt Test MAE khoảng 2.268 bước. Trong demo cùng một mê cung, BFS duyệt 104 node, A* + Manhattan duyệt 46 node, còn A* + ANN duyệt 33 node với cùng độ dài đường đi là 20 bước.
+Project gồm các bước chính: sinh mê cung 20x20, tạo dataset bằng BFS, thiết kế ANN, thực hiện ba thí nghiệm underfitting, overfitting và good fit, sau đó tích hợp mô hình good fit vào A* để so sánh với BFS và A* dùng Manhattan. Kết quả thực nghiệm cho thấy mô hình good fit đạt Test MAE khoảng 2.284 bước. Trong demo cùng một mê cung, BFS duyệt 104 node, A* + Manhattan duyệt 46 node, còn A* + ANN duyệt 33 node với cùng độ dài đường đi là 20 bước.
 
 \begin{keybox}{Thông tin thực nghiệm chính}
 \begin{tabularx}{\linewidth}{>{\bfseries\color{Primary}}p{0.24\linewidth}Y}
 Dataset & 100,000 trạng thái được sinh từ 500 mê cung ngẫu nhiên kích thước 20x20. \\
 Input ANN & 10 đặc trưng gồm tọa độ, khoảng cách tương đối đến goal và vật cản cục bộ. \\
-Mô hình tốt nhất & Good fit, Test MSE = 14.416 và Test MAE = 2.268 bước. \\
+Mô hình tốt nhất & Good fit, Test MSE = 14.300 và Test MAE = 2.284 bước. \\
 Demo tìm đường & A* + ANN duyệt 33 node, ít hơn A* + Manhattan 13 node và ít hơn BFS 71 node. \\
 \end{tabularx}
 \end{keybox}
@@ -385,7 +385,7 @@ Hai chỉ số được tính theo công thức:
 
 Trong đó \(y_i\) là khoảng cách thật do BFS tạo ra và \(\hat{y}_i\) là khoảng cách do ANN dự đoán. MSE nhạy hơn với lỗi lớn, còn MAE dễ dùng khi thuyết trình vì có thể diễn giải trực tiếp là ``mô hình sai trung bình bao nhiêu bước''.
 
-Ví dụ, MAE = 2.268 nghĩa là mô hình dự đoán sai trung bình khoảng 2.268 bước.
+Ví dụ, MAE = 2.284 nghĩa là mô hình dự đoán sai trung bình khoảng 2.284 bước.
 
 \subsection{BFS}
 
@@ -440,6 +440,7 @@ Hệ thống được chia thành các module rõ ràng:
     \item \texttt{models.py}: định nghĩa ba cấu hình ANN.
     \item \texttt{train.py}: train underfit, overfit và good fit.
     \item \texttt{demo.py}: so sánh BFS, A* + Manhattan và A* + ANN.
+    \item \texttt{ui.py}: giao diện tương tác để random map, chạy thuật toán và xem node/path.
 \end{itemize}
 
 \begin{figure}[H]
@@ -663,17 +664,17 @@ So sánh ba thuật toán:
 \toprule
 \textbf{Mô hình} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Epoch} & \textbf{Test MSE} & \textbf{Test MAE} \\
 \midrule
-Underfit & 70,000 & 15,000 & 15,000 & 5 & 16.253 & 2.619 \\
-Overfit & 3,000 & 15,000 & 15,000 & 150 & 22.276 & 2.747 \\
-Good fit & 70,000 & 15,000 & 15,000 & 15 & 14.416 & 2.268 \\
+Underfit & 70,000 & 15,000 & 15,000 & 5 & 16.322 & 2.669 \\
+Overfit & 3,000 & 15,000 & 15,000 & 150 & 24.811 & 3.064 \\
+Good fit & 70,000 & 15,000 & 15,000 & 20 & 14.300 & 2.284 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Mô hình good fit đạt Test MAE thấp nhất, khoảng 2.268 bước. Mô hình overfit tuy lớn hơn và train lâu hơn nhưng test MAE kém hơn, cho thấy việc tăng độ phức tạp không tự động làm mô hình tốt hơn.
+Mô hình good fit đạt Test MAE thấp nhất, khoảng 2.284 bước. Mô hình overfit tuy lớn hơn và train lâu hơn nhưng test MAE kém hơn, cho thấy việc tăng độ phức tạp không tự động làm mô hình tốt hơn.
 
 \begin{resultbox}{Kết quả nổi bật}
-So với underfit, mô hình good fit giảm Test MAE từ 2.619 xuống 2.268 bước, tương đương cải thiện khoảng 13.4\%. So với overfit, good fit cũng tốt hơn khoảng 17.4\% theo MAE. Điều này củng cố nhận xét rằng mô hình vừa phải, có regularization và dừng sớm phù hợp hơn với dataset của project.
+So với underfit, mô hình good fit giảm Test MAE từ 2.669 xuống 2.284 bước, tương đương cải thiện khoảng 14.4\%. So với overfit, good fit cũng tốt hơn khoảng 25.5\% theo MAE. Điều này củng cố nhận xét rằng mô hình vừa phải, có regularization và dừng sớm phù hợp hơn với dataset của project.
 \end{resultbox}
 
 \subsection{Kết quả cross-validation}
@@ -685,18 +686,18 @@ So với underfit, mô hình good fit giảm Test MAE từ 2.619 xuống 2.268 b
 \toprule
 \textbf{Fold} & \textbf{Validation rows} & \textbf{MAE} & \textbf{MSE} \\
 \midrule
-1 & 20,000 & 2.245 & 15.241 \\
-2 & 20,000 & 2.292 & 15.139 \\
-3 & 20,000 & 2.208 & 14.751 \\
-4 & 20,000 & 2.206 & 14.018 \\
-5 & 20,000 & 2.465 & 14.373 \\
+1 & 20,000 & 2.250 & 15.436 \\
+2 & 20,000 & 2.175 & 15.181 \\
+3 & 20,000 & 2.305 & 14.340 \\
+4 & 20,000 & 2.206 & 14.107 \\
+5 & 20,000 & 2.179 & 15.230 \\
 \midrule
-\textbf{Trung bình} & - & \textbf{2.283} & \textbf{14.704} \\
+\textbf{Trung bình} & - & \textbf{2.223} & \textbf{14.859} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-MAE trung bình 2.283 cho thấy mô hình có sai số tương đối ổn định qua nhiều fold. Fold 5 có MAE cao hơn một chút, có thể do tập validation trong fold đó chứa nhiều trạng thái khó hơn.
+MAE trung bình 2.223 cho thấy mô hình có sai số tương đối ổn định qua nhiều fold. Fold 3 có MAE cao hơn một chút, có thể do tập validation trong fold đó chứa nhiều trạng thái khó hơn.
 
 \subsection{Kết quả demo tìm đường}
 
@@ -713,9 +714,9 @@ MAE trung bình 2.283 cho thấy mô hình có sai số tương đối ổn đ�
 \toprule
 \textbf{Thuật toán} & \textbf{Tìm thấy} & \textbf{Độ dài} & \textbf{Node duyệt} & \textbf{Thời gian} \\
 \midrule
-BFS & Có & 20 & 104 & 0.10 ms \\
+BFS & Có & 20 & 104 & 0.09 ms \\
 A* + Manhattan & Có & 20 & 46 & 0.07 ms \\
-A* + ANN & Có & 20 & 34 & 0.37 ms \\
+A* + ANN & Có & 20 & 33 & 0.48 ms \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -724,7 +725,9 @@ Trong demo này, cả ba thuật toán đều tìm được đường dài 20 b�
 
 Về số node duyệt, A* + ANN giảm khoảng 68.3\% so với BFS và khoảng 28.3\% so với A* + Manhattan trong mê cung demo. Độ dài đường đi vẫn giữ ở 20 bước, tức trong trường hợp này việc dùng ANN heuristic không làm đường đi dài hơn.
 
-Mặc dù A* + ANN có thời gian chạy hơi nhỉnh hơn một chút so với tính toán biểu thức Manhattan thuần túy do quá trình xử lý của mô hình, nhưng nhờ áp dụng TensorFlow Lite, tốc độ inference trên CPU diễn ra cực kỳ nhanh (chỉ 0.37ms). Điều này chứng minh tiềm năng áp dụng AI vào thuật toán tìm đường trong các bài toán thực tế mà không lo nghẽn cổ chai về mặt tính toán.
+Mặc dù A* + ANN có thời gian chạy hơi nhỉnh hơn một chút so với tính toán biểu thức Manhattan thuần túy do quá trình xử lý của mô hình, nhưng nhờ áp dụng TensorFlow Lite, tốc độ inference trên CPU vẫn diễn ra rất nhanh (khoảng 0.48ms trong demo). Điều này cho thấy tiềm năng áp dụng AI vào thuật toán tìm đường khi chi phí suy luận được kiểm soát.
+
+Ngoài ảnh demo tĩnh, project có thêm giao diện tương tác tại \texttt{src/ui.py}. Giao diện này cho phép random map mới, chạy từng thuật toán hoặc chạy tất cả, chọn thuật toán để xem lại node đã duyệt, đường đi cuối cùng, số node và thời gian chạy.
 
 \section{Nhận xét}
 
@@ -738,7 +741,7 @@ Mô hình overfit có số tham số lớn hơn rất nhiều và train 150 epoc
 
 \subsection{Phân tích good fit}
 
-Mô hình good fit có kiến trúc vừa phải, thêm Dropout và \mbox{EarlyStopping}. Kết quả test tốt nhất trong ba mô hình với MAE khoảng 2.268 bước. Điều này cho thấy việc kiểm soát độ phức tạp và theo dõi validation loss quan trọng hơn việc chỉ tăng kích thước mô hình.
+Mô hình good fit có kiến trúc vừa phải, thêm Dropout và \mbox{EarlyStopping}. Kết quả test tốt nhất trong ba mô hình với MAE khoảng 2.284 bước. Điều này cho thấy việc kiểm soát độ phức tạp và theo dõi validation loss quan trọng hơn việc chỉ tăng kích thước mô hình.
 
 \subsection{Nhận xét về ANN heuristic}
 
@@ -765,6 +768,40 @@ Khi thuyết trình, nên nhấn mạnh sự khác nhau giữa hai loại đánh
     \item Thử nghiệm suy luận trên các phần cứng chuyên dụng như Neural Processing Unit (NPU) hoặc Edge TPU.
     \item So sánh thêm với Greedy Best-First Search hoặc các biến thể heuristic khác.
 \end{itemize}
+
+\section{Mức độ sử dụng AI hỗ trợ và sản phẩm nộp}
+
+\subsection{Mức độ sử dụng AI hỗ trợ}
+
+Trong quá trình thực hiện, AI được dùng như một công cụ hỗ trợ kỹ thuật, không thay thế phần phân tích và phản biện của nhóm. Cụ thể, AI hỗ trợ gợi ý cấu trúc project, tạo khung code ban đầu, giải thích lỗi khi debug và đề xuất cách tổ chức nội dung báo cáo.
+
+Các quyết định chính của đề tài vẫn cần nhóm tự nắm và bảo vệ, gồm: thiết kế input/output của ANN, cách sinh nhãn bằng BFS, lý do chia train/validation/test, cách đọc đồ thị loss/MAE, nguyên nhân underfitting/overfitting, và hạn chế của ANN khi dùng làm heuristic cho A*.
+
+\begin{keybox}{Cam kết khi bảo vệ}
+Nhóm đã chạy lại code, dùng số liệu thực tế trong thư mục \texttt{outputs/}, và không trình bày ANN như một phương pháp luôn tốt hơn heuristic truyền thống. Kết quả được hiểu là minh họa thực nghiệm cho việc kết hợp ANN với thuật toán A*.
+\end{keybox}
+
+\subsection{Sản phẩm nộp}
+
+\begin{table}[H]
+\centering
+\caption{Danh sách sản phẩm nộp kèm project}
+\begin{tabularx}{0.95\textwidth}{>{\bfseries\raggedright\arraybackslash}p{0.28\textwidth}Y}
+\toprule
+Hạng mục & File hoặc thư mục tương ứng \\
+\midrule
+Báo cáo PDF & \texttt{reports/ann\_astar\_report.pdf} \\
+Báo cáo nguồn & \texttt{reports/ann\_astar\_report.tex} và \texttt{reports/report\_draft.md} \\
+Slide thuyết trình & \texttt{slides/slide\_content.md} và \texttt{slides/slide\_outline.md} \\
+Mã nguồn & Thư mục \texttt{src/} \\
+UI tương tác & \texttt{src/ui.py}, chạy bằng lệnh \texttt{python -m src.ui} \\
+Dataset & \texttt{data/maze\_dataset.csv} \\
+Model đã train & Thư mục \texttt{models/} gồm file Keras và TensorFlow Lite \\
+Kết quả thực nghiệm & Thư mục \texttt{outputs/} gồm biểu đồ loss, metrics và ảnh demo \\
+Hướng dẫn chạy & \texttt{README.md} \\
+\bottomrule
+\end{tabularx}
+\end{table}
 
 \section{Kết luận}
 

@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999998 (TeX Live 2026) (preloaded format=xelatex 2026.5.1)  9 JUL 2026 08:30
+This is XeTeX, Version 3.141592653-2.6-0.999998 (TeX Live 2026) (preloaded format=xelatex 2026.5.1)  9 JUL 2026 13:36
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1694,7 +1694,7 @@ LaTeX Font Info:    Font shape `TU/texgyrecursor(0)/m/n' will be
 (Font)              scaled to size 11.39996pt on input line 397.
  [7]
 LaTeX Font Info:    Font shape `TU/texgyrecursor(0)/m/n' will be
-(Font)              scaled to size 10.40245pt on input line 481.
+(Font)              scaled to size 10.40245pt on input line 482.
  [8] [9] [10]
 File: ../outputs/underfit_loss.png Graphic file (type bmp)
 <../outputs/underfit_loss.png>
@@ -1707,21 +1707,21 @@ File: ../outputs/goodfit_loss.png Graphic file (type bmp)
 File: ../outputs/demo_path.png Graphic file (type bmp)
 <../outputs/demo_path.png>
 
-[13] [14] [15] [16] (./ann_astar_report.aux)
+[13] [14] [15] [16] [17] (./ann_astar_report.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
  ***********
 Package rerunfilecheck Info: File `ann_astar_report.out' has not changed.
-(rerunfilecheck)             Checksum: 8400E461E2800A16839D7611835D4ECA;6828.
+(rerunfilecheck)             Checksum: 93847B4CA3B1FCA9A44E61169D244308;7485.
  ) 
 Here is how much of TeX's memory you used:
- 36641 strings out of 468168
- 766914 string characters out of 5432816
- 1365588 words of memory out of 5000000
- 64816 multiletter control sequences out of 15000+600000
+ 36644 strings out of 468168
+ 766959 string characters out of 5432816
+ 1366290 words of memory out of 5000000
+ 64819 multiletter control sequences out of 15000+600000
  631422 words of font info for 94 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
  84i,13n,107p,490b,969s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on ann_astar_report.pdf (17 pages).
+Output written on ann_astar_report.pdf (18 pages).

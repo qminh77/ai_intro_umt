@@ -1,54 +1,66 @@
-# Khung slide thuyet trinh 15-20 phut
+# Khung slide thuyết trình 15-20 phút
 
-## Slide 1: Ten de tai
+## Slide 1: Tên đề tài
 
-- Ung dung ANN lam heuristic cho A* trong bai toan tim duong me cung.
-- Ten thanh vien nhom.
+- Ứng dụng ANN làm heuristic cho A* trong bài toán tìm đường mê cung.
+- Thành viên nhóm.
 
-## Slide 2: Ly do chon de tai
+## Slide 2: Mục tiêu đề tài
 
-- Me cung la bai toan truc quan.
-- A* la thuat toan tim kiem truyen thong.
-- ANN giup hoc heuristic tu du lieu that.
+- ANN học như thế nào.
+- Minh họa underfit, overfit, good fit.
+- Tích hợp ANN vào A*.
 
-## Slide 3: Bai toan tong quan
+## Slide 3: Bài toán tổng quan
 
-- Me cung 20x20.
-- Start, Goal, tuong va duong di.
-- Muc tieu: tim duong hop ly tu Start den Goal.
+- Mê cung 20x20.
+- Start, Goal, tường và đường đi.
+- Agent đi 4 hướng.
 
-## Slide 4: A* hoat dong nhu the nao
+## Slide 4: BFS
+
+- Duyệt theo từng lớp khoảng cách.
+- Đảm bảo đường ngắn nhất.
+- Dùng để tạo nhãn `true_distance`.
+
+## Slide 5: A* hoạt động như thế nào
 
 - `f(n) = g(n) + h(n)`.
-- Vai tro cua heuristic.
+- Vai trò của heuristic.
 
-## Slide 5: Manhattan heuristic
+## Slide 6: Manhattan heuristic
 
-- Cong thuc Manhattan.
-- Diem manh: don gian, nhanh, co tinh chat tot trong me cung 4 huong.
-- Han che: khong nhin thay vat can phuc tap.
+- Công thức Manhattan.
+- Điểm mạnh: đơn giản, nhanh.
+- Hạn chế: không học từ dữ liệu.
 
-## Slide 6: Y tuong thay heuristic bang ANN
+## Slide 7: Ý tưởng thay heuristic bằng ANN
 
-- ANN nhan state cua o hien tai.
-- ANN du doan chi phi con lai den Goal.
-- A* dung gia tri nay lam `h(n)`.
+- ANN nhận state của ô hiện tại.
+- ANN dự đoán chi phí còn lại đến Goal.
+- A* dùng giá trị này làm `h(n)`.
 
-## Slide 7: ANN hoc nhu the nao
+## Slide 8: ANN học như thế nào
 
 - Forward propagation.
 - Loss.
 - Backpropagation.
 - Epoch.
 
-## Slide 8: Train / Validation / Test
+## Slide 9: Train / Validation / Test
 
-- Training: hoc trong so.
-- Validation: theo doi va chinh cau hinh.
-- Test: danh gia cuoi cung.
-- Ti le 70/15/15.
+- Training: học trọng số.
+- Validation: theo dõi và chỉnh cấu hình.
+- Test: đánh giá cuối cùng.
+- Tỉ lệ 70/15/15.
 
-## Slide 9: Input / Output cua ANN
+## Slide 10: Chỉ số đánh giá
+
+- Accuracy và ROC/AUC dùng cho classification.
+- Project dùng regression nên dùng MSE và MAE.
+- Cross-validation kiểm tra độ ổn định.
+
+## Slide 11: Input / Output của ANN
 
 Input:
 
@@ -62,43 +74,50 @@ Output:
 true_distance
 ```
 
-## Slide 10: Tao dataset bang BFS
+## Slide 12: Underfitting
 
-- Sinh nhieu me cung ngau nhien.
-- Chon goal.
-- Dung BFS tinh khoang cach that tu moi o den goal.
-- Luu thanh CSV.
+- Mô hình quá nhỏ.
+- Train 5 epoch.
+- Test MAE = 2.669.
+- Chèn hình `outputs/underfit_loss.png`.
 
-## Slide 11: Underfitting
+## Slide 13: Overfitting
 
-- Mo hinh qua nho.
-- Train it epoch.
-- Chen hinh `outputs/underfit_loss.png`.
-- Nhan xet train/validation loss.
+- Mô hình quá lớn.
+- Train 150 epoch trên 3,000 dòng.
+- Test MAE = 3.064.
+- Chèn hình `outputs/overfit_loss.png`.
 
-## Slide 12: Overfitting
+## Slide 14: Good Fit
 
-- Mo hinh qua lon.
-- Train lau tren tap train nho.
-- Chen hinh `outputs/overfit_loss.png`.
-- Nhan xet train loss va validation loss.
+- Mô hình vừa phải.
+- Dropout và EarlyStopping.
+- Dừng ở 20 epoch.
+- Test MAE = 2.284.
+- Chèn hình `outputs/goodfit_loss.png`.
 
-## Slide 13: Good Fit
+## Slide 15: Cross-validation
 
-- Mo hinh vua phai.
-- Dropout va EarlyStopping.
-- Chen hinh `outputs/goodfit_loss.png`.
-- Trinh bay Test MAE: khoang 2.27 buoc trong lan chay hien tai.
+- 5 folds, 10 epoch/fold.
+- Mean MAE = 2.223.
+- Mean MSE = 14.859.
 
-## Slide 14: Demo so sanh BFS, A* Manhattan, A* ANN
+## Slide 16: Demo so sánh BFS, A* Manhattan, A* ANN
 
-- Chen `outputs/demo_path.png`.
-- Bang so sanh: path length, explored nodes, time.
-- Lan chay hien tai: BFS 104 nodes, A* Manhattan 46 nodes, A* ANN 33 nodes.
+- Chèn `outputs/demo_path.png`.
+- Có UI tương tác tại `src/ui.py`, chạy bằng `python -m src.ui`.
+- BFS: 104 nodes.
+- A* Manhattan: 46 nodes.
+- A* ANN: 33 nodes.
 
-## Slide 15: Ket luan va han che
+## Slide 17: Nhận xét và hạn chế
 
-- ANN co the hoc heuristic tu du lieu.
-- A* + ANN la su ket hop giua AI hien dai va thuat toan co dien.
-- Han che: ANN khong dam bao luon toi uu.
-- Neu co them thoi gian: train nhieu me cung hon, them dac trung cuc bo rong hon.
+- A* + ANN giảm node duyệt trong demo.
+- ANN không đảm bảo luôn tối ưu.
+- Input còn cục bộ, chưa nhìn toàn bộ mê cung.
+
+## Slide 18: Kết luận và minh bạch AI
+
+- Project thể hiện sự kết hợp giữa AI hiện đại và thuật toán cổ điển.
+- AI hỗ trợ khung code/debug/tổ chức nội dung.
+- Nhóm tự chạy code, đọc kết quả và giải thích cấu hình.

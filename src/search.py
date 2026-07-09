@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import deque
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from heapq import heappop, heappush
 from time import perf_counter
 from typing import Callable
@@ -22,6 +22,7 @@ class SearchResult:
     path_length: int | None
     explored_nodes: int
     elapsed_ms: float
+    explored_order: list[Position] = field(default_factory=list)
 
 
 def manhattan(position: Position, goal: Position) -> float:
@@ -75,10 +76,12 @@ def bfs_path(maze: np.ndarray, start: Position, goal: Position) -> SearchResult:
     came_from: dict[Position, Position] = {}
     visited = {start}
     explored_nodes = 0
+    explored_order: list[Position] = []
 
     while queue:
         current = queue.popleft()
         explored_nodes += 1
+        explored_order.append(current)
         if current == goal:
             path = reconstruct_path(came_from, start, goal)
             return SearchResult(
@@ -88,6 +91,7 @@ def bfs_path(maze: np.ndarray, start: Position, goal: Position) -> SearchResult:
                 len(path) - 1,
                 explored_nodes,
                 _elapsed_ms(started_at),
+                explored_order,
             )
 
         for neighbor in iter_neighbors(maze, current):
@@ -96,7 +100,9 @@ def bfs_path(maze: np.ndarray, start: Position, goal: Position) -> SearchResult:
                 came_from[neighbor] = current
                 queue.append(neighbor)
 
-    return SearchResult("BFS", False, [], None, explored_nodes, _elapsed_ms(started_at))
+    return SearchResult(
+        "BFS", False, [], None, explored_nodes, _elapsed_ms(started_at), explored_order
+    )
 
 
 def astar(
@@ -118,6 +124,7 @@ def astar(
     closed: set[Position] = set()
     counter = 0
     explored_nodes = 0
+    explored_order: list[Position] = []
 
     while open_heap:
         _, _, current = heappop(open_heap)
@@ -126,6 +133,7 @@ def astar(
 
         closed.add(current)
         explored_nodes += 1
+        explored_order.append(current)
 
         if current == goal:
             path = reconstruct_path(came_from, start, goal)
@@ -136,6 +144,7 @@ def astar(
                 len(path) - 1,
                 explored_nodes,
                 _elapsed_ms(started_at),
+                explored_order,
             )
 
         for neighbor in iter_neighbors(maze, current):
@@ -147,9 +156,16 @@ def astar(
                 counter += 1
                 heappush(open_heap, (f_score, counter, neighbor))
 
-    return SearchResult(algorithm_name, False, [], None, explored_nodes, _elapsed_ms(started_at))
+    return SearchResult(
+        algorithm_name,
+        False,
+        [],
+        None,
+        explored_nodes,
+        _elapsed_ms(started_at),
+        explored_order,
+    )
 
 
 def _elapsed_ms(started_at: float) -> float:
     return (perf_counter() - started_at) * 1000
-

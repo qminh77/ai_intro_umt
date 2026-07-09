@@ -72,6 +72,8 @@ def run_experiment(
     outputs_dir: Path,
 ) -> dict[str, float | int | str]:
     config = EXPERIMENTS[experiment]
+    tf = import_tensorflow()
+    tf.keras.utils.set_random_seed(seed)
     train_df, val_df, test_df = split_dataframe(df, seed=seed)
 
     if config.train_limit is not None and len(train_df) > config.train_limit:
@@ -109,7 +111,6 @@ def run_experiment(
     model.save(model_path)
 
     # Convert and save TFLite model
-    tf = import_tensorflow()
     converter = tf.lite.TFLiteConverter.from_keras_model(model)
     tflite_model = converter.convert()
     tflite_path.write_bytes(tflite_model)

@@ -13,7 +13,7 @@ Trong đề tài này, nhóm kết hợp thuật toán tìm kiếm truyền th�
 Mục tiêu của đề tài gồm ba phần:
 
 - Hiểu cách ANN học từ dữ liệu, cách chia train/validation/test và cách đọc đồ thị loss.
-- Minh họa ba hiện tượng underfitting, overfitting và good fit.
+- Minh họa ba hiện tượng underfitting, overfitting và good fit bằng kết quả train thật.
 - Tích hợp ANN vào A* để so sánh với BFS và A* dùng Manhattan.
 
 ## 2. Cơ sở lý thuyết về ANN
@@ -32,7 +32,7 @@ Dữ liệu được chia thành ba phần:
 - Validation set: dùng để theo dõi quá trình học và điều chỉnh cấu hình.
 - Testing set: dùng để đánh giá cuối cùng sau khi mô hình đã được chọn.
 
-Trong project, dữ liệu được chia theo tỉ lệ 70/15/15. Việc tách validation khỏi test là quan trọng vì validation được dùng trong quá trình thử nghiệm cấu hình, còn test chỉ nên được dùng một lần để đánh giá khách quan.
+Trong project, dữ liệu được chia theo tỉ lệ 70/15/15. Việc tách validation khỏi test là quan trọng vì validation được dùng trong quá trình thử nghiệm cấu hình, còn test chỉ nên được dùng để đánh giá khách quan sau cùng.
 
 ## 4. Chỉ số đánh giá
 
@@ -43,7 +43,7 @@ Trong project này, đầu ra của ANN là một số thực biểu diễn kho�
 - MSE: bình phương sai số trung bình, phạt mạnh các dự đoán sai nhiều.
 - MAE: sai số tuyệt đối trung bình, dễ hiểu vì có đơn vị là số bước.
 
-Ví dụ, MAE = 2.27 nghĩa là mô hình dự đoán sai trung bình khoảng 2.27 bước.
+Ví dụ, MAE = 2.284 nghĩa là mô hình dự đoán sai trung bình khoảng 2.284 bước.
 
 Cross-validation cũng được dùng để kiểm tra độ ổn định của mô hình. Dữ liệu được chia thành nhiều fold; mỗi lần một fold làm validation và các fold còn lại làm train. Kết quả trung bình qua các fold giúp đánh giá mô hình ít phụ thuộc hơn vào một lần chia dữ liệu cụ thể.
 
@@ -90,9 +90,9 @@ x, y, goal_x, goal_y, dx, dy, up_wall, down_wall, left_wall, right_wall
 
 Trong đó:
 
-- `x, y` là vị trí hiện tại.
-- `goal_x, goal_y` là vị trí đích.
-- `dx, dy` là độ lệch theo trục x và y.
+- `x, y` là vị trí hiện tại đã chuẩn hóa.
+- `goal_x, goal_y` là vị trí đích đã chuẩn hóa.
+- `dx, dy` là khoảng cách tuyệt đối theo hai trục đã chuẩn hóa.
 - `up_wall, down_wall, left_wall, right_wall` cho biết bốn ô xung quanh có phải tường hoặc ra ngoài biên không.
 
 Đầu ra của mô hình là:
@@ -113,7 +113,7 @@ Mô hình underfit có kiến trúc rất nhỏ: một hidden layer với 4 neur
 
 ### 7.2. Overfitting
 
-Mô hình overfit có nhiều layer và nhiều neuron hơn. Nhóm cố tình train 150 epoch trên một phần nhỏ dữ liệu train. Mục tiêu là tạo tình huống mô hình học quá kỹ tập train, trong khi validation loss không cải thiện tương ứng.
+Mô hình overfit có nhiều layer và nhiều neuron hơn. Nhóm cố tình train 150 epoch trên một phần nhỏ dữ liệu train, chỉ 3,000 dòng. Mục tiêu là tạo tình huống mô hình học quá kỹ tập train, trong khi validation loss xấu dần.
 
 ### 7.3. Good fit
 
@@ -125,13 +125,13 @@ Dataset có 100,000 dòng, được sinh từ 500 mê cung. Kết quả test:
 
 | Mô hình | Train rows | Validation rows | Test rows | Epochs | Test MSE | Test MAE |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Underfit | 70,000 | 15,000 | 15,000 | 5 | 16.253 | 2.619 |
-| Overfit | 3,000 | 15,000 | 15,000 | 150 | 22.276 | 2.747 |
-| Good fit | 70,000 | 15,000 | 15,000 | 15 | 14.416 | 2.268 |
+| Underfit | 70,000 | 15,000 | 15,000 | 5 | 16.322 | 2.669 |
+| Overfit | 3,000 | 15,000 | 15,000 | 150 | 24.811 | 3.064 |
+| Good fit | 70,000 | 15,000 | 15,000 | 20 | 14.300 | 2.284 |
 
 Kết quả cho thấy mô hình good fit có MAE thấp nhất. Mô hình overfit tuy train lâu và lớn hơn nhưng test MAE lại kém hơn, cho thấy mô hình không tổng quát tốt bằng cấu hình có kiểm soát.
 
-Cần chèn các hình sau vào báo cáo:
+Các hình dùng trong báo cáo:
 
 - `outputs/underfit_loss.png`
 - `outputs/overfit_loss.png`
@@ -143,13 +143,13 @@ Nhóm chạy 5-fold cross-validation với 10 epoch mỗi fold:
 
 | Fold | Validation rows | MAE | MSE |
 | --- | ---: | ---: | ---: |
-| 1 | 20,000 | 2.245 | 15.241 |
-| 2 | 20,000 | 2.292 | 15.139 |
-| 3 | 20,000 | 2.208 | 14.751 |
-| 4 | 20,000 | 2.206 | 14.018 |
-| 5 | 20,000 | 2.465 | 14.373 |
+| 1 | 20,000 | 2.250 | 15.436 |
+| 2 | 20,000 | 2.175 | 15.181 |
+| 3 | 20,000 | 2.305 | 14.340 |
+| 4 | 20,000 | 2.206 | 14.107 |
+| 5 | 20,000 | 2.179 | 15.230 |
 
-MAE trung bình là 2.283. Kết quả này cho thấy mô hình có sai số tương đối ổn định qua nhiều cách chia dữ liệu.
+MAE trung bình là 2.223. Kết quả này cho thấy mô hình có sai số tương đối ổn định qua nhiều cách chia dữ liệu.
 
 ## 10. Tích hợp ANN vào A*
 
@@ -172,19 +172,19 @@ Demo dùng cùng một mê cung cho ba thuật toán:
 - A* + Manhattan
 - A* + ANN
 
+Ngoài ảnh demo tĩnh, project có thêm UI tương tác trong `src/ui.py`. UI cho phép random map, chạy từng thuật toán hoặc chạy tất cả, xem lại node đã duyệt, đường đi cuối cùng, số node và thời gian chạy.
+
 Kết quả:
 
 | Thuật toán | Tìm thấy đường | Độ dài đường đi | Node đã duyệt | Thời gian |
 | --- | --- | ---: | ---: | ---: |
-| BFS | Có | 20 | 104 | 0.10 ms |
+| BFS | Có | 20 | 104 | 0.09 ms |
 | A* + Manhattan | Có | 20 | 46 | 0.07 ms |
-| A* + ANN | Có | 20 | 34 | 0.37 ms |
+| A* + ANN | Có | 20 | 33 | 0.48 ms |
 
 Trong lần demo này, cả ba thuật toán đều tìm được đường dài 20 bước. A* + Manhattan duyệt ít node hơn BFS. A* + ANN duyệt ít node nhất, cho thấy heuristic học được có thể hướng tìm kiếm tốt hơn trong trường hợp này.
 
-Mặc dù A* + ANN có thời gian chạy hơi nhỉnh hơn một chút so với công thức toán học thô của Manhattan do quá trình gọi suy luận, nhưng nhờ sử dụng TensorFlow Lite, tốc độ xử lý trên CPU diễn ra cực kỳ nhanh (chỉ 0.37ms). Điều này chứng minh hiệu suất ưu việt của việc kết hợp AI vào thuật toán tìm đường mà vẫn đảm bảo tính ứng dụng thực tế.
-
-Cần chèn hình:
+Hình demo:
 
 - `outputs/demo_path.png`
 
@@ -200,22 +200,15 @@ Hạn chế:
 
 - ANN chỉ nhìn bốn ô xung quanh nên chưa hiểu toàn bộ cấu trúc mê cung.
 - ANN heuristic không đảm bảo tối ưu tuyệt đối.
-- Việc thiết lập ban đầu cho bộ công cụ AI phức tạp hơn đôi chút.
+- Thời gian A* + ANN cao hơn Manhattan vì phải gọi mô hình suy luận.
 
 Hướng phát triển:
 
 - Thêm đặc trưng vùng lân cận lớn hơn, ví dụ cửa sổ 3x3 hoặc 5x5.
 - Train trên nhiều mê cung hơn.
-- Thử nghiệm trên các môi trường di động / nhúng hoặc sử dụng Neural Processing Unit (NPU).
-- So sánh thêm với Greedy Best-First Search.
+- So sánh thêm với Greedy Best-First Search hoặc Weighted A*.
 
-## 13. Kết luận
-
-Đề tài đã xây dựng được một hệ thống hoàn chỉnh gồm sinh mê cung, tạo dataset bằng BFS, huấn luyện ANN, minh họa underfitting/overfitting/good fit và tích hợp ANN vào A*. Kết quả demo cho thấy ANN có thể đóng vai trò heuristic học từ dữ liệu và giúp A* giảm số node duyệt trong một số trường hợp.
-
-Tuy nhiên, ANN không thay thế hoàn toàn heuristic truyền thống vì không đảm bảo tính tối ưu. Kết quả phù hợp nhất nên được hiểu là một minh họa cho sự kết hợp giữa AI hiện đại và thuật toán tìm kiếm cổ điển.
-
-## 14. Mức độ sử dụng AI hỗ trợ
+## 13. Mức độ sử dụng AI hỗ trợ
 
 AI được dùng để hỗ trợ:
 
@@ -223,5 +216,22 @@ AI được dùng để hỗ trợ:
 - Sinh khung code ban đầu.
 - Hỗ trợ debug và tổ chức báo cáo.
 
-Nhóm cần tự chạy lại code, đọc kết quả thật, chỉnh sửa nội dung báo cáo/slide bằng lời của mình và hiểu rõ từng phần code để trả lời phản biện.
+Nhóm tự chịu trách nhiệm chạy lại code, đọc kết quả thật, chỉnh sửa nội dung báo cáo/slide bằng lời của mình và hiểu rõ từng phần code để trả lời phản biện.
 
+## 14. Sản phẩm nộp
+
+- Báo cáo PDF: `reports/ann_astar_report.pdf`
+- Báo cáo nguồn LaTeX: `reports/ann_astar_report.tex`
+- Slide nội dung: `slides/slide_content.md`
+- Source code: thư mục `src/`
+- UI tương tác: `src/ui.py`
+- Dataset: `data/maze_dataset.csv`
+- Model đã train: thư mục `models/`
+- Biểu đồ/kết quả: thư mục `outputs/`
+- Hướng dẫn chạy: `README.md`
+
+## 15. Kết luận
+
+Đề tài đã xây dựng được một hệ thống hoàn chỉnh gồm sinh mê cung, tạo dataset bằng BFS, huấn luyện ANN, minh họa underfitting/overfitting/good fit và tích hợp ANN vào A*. Kết quả demo cho thấy ANN có thể đóng vai trò heuristic học từ dữ liệu và giúp A* giảm số node duyệt trong một số trường hợp.
+
+Tuy nhiên, ANN không thay thế hoàn toàn heuristic truyền thống vì không đảm bảo tính tối ưu. Kết quả phù hợp nhất nên được hiểu là một minh họa cho sự kết hợp giữa AI hiện đại và thuật toán tìm kiếm cổ điển.

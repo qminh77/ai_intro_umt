@@ -9,7 +9,7 @@ import pandas as pd
 
 from .config import DATA_DIR, OUTPUTS_DIR
 from .features import split_features_target
-from .models import build_model
+from .models import build_model, import_tensorflow
 from .train import mean_absolute_error, mean_squared_error
 
 
@@ -28,6 +28,7 @@ def main() -> None:
     args = parse_args()
     if args.folds < 2:
         raise ValueError("--folds must be at least 2.")
+    tf = import_tensorflow()
 
     df = pd.read_csv(args.dataset)
     shuffled = df.sample(frac=1.0, random_state=args.seed).reset_index(drop=True)
@@ -45,6 +46,7 @@ def main() -> None:
         x_train, y_train = split_features_target(train_df)
         x_val, y_val = split_features_target(validation_df)
 
+        tf.keras.utils.set_random_seed(args.seed + fold_index)
         model = build_model("goodfit", input_dim=x_train.shape[1])
         model.fit(
             x_train,

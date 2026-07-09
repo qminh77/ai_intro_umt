@@ -5,11 +5,24 @@ __pycache__/
 venv/
 
 data/*.csv
+!data/maze_dataset.csv
 models/*.keras
+!models/ann_heuristic_underfit.keras
+!models/ann_heuristic_overfit.keras
+!models/ann_heuristic_goodfit.keras
 models/*.h5
 outputs/*.csv
 outputs/*.json
 outputs/*.png
+!outputs/underfit_history.csv
+!outputs/overfit_history.csv
+!outputs/goodfit_history.csv
+!outputs/underfit_metrics.json
+!outputs/overfit_metrics.json
+!outputs/goodfit_metrics.json
+!outputs/training_summary.json
+!outputs/cross_validation.json
+!outputs/demo_metrics.json
 !outputs/underfit_loss.png
 !outputs/overfit_loss.png
 !outputs/goodfit_loss.png

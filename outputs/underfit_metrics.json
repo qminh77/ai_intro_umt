@@ -1,0 +1,15 @@
+{
+  "experiment": "underfit",
+  "train_rows": 70000,
+  "validation_rows": 15000,
+  "test_rows": 15000,
+  "epochs_ran": 5,
+  "test_loss_mse": 16.322195053100586,
+  "test_mae_from_keras": 2.6694812774658203,
+  "test_mae": 2.6694812774658203,
+  "test_mse": 16.322195053100586,
+  "model_path": "/Users/nguyenquocminh/Downloads/SUM26/AI/maze-ann-a-star/models/ann_heuristic_underfit.keras",
+  "tflite_path": "/Users/nguyenquocminh/Downloads/SUM26/AI/maze-ann-a-star/models/ann_heuristic_underfit.tflite",
+  "history_path": "/Users/nguyenquocminh/Downloads/SUM26/AI/maze-ann-a-star/outputs/underfit_history.csv",
+  "plot_path": "/Users/nguyenquocminh/Downloads/SUM26/AI/maze-ann-a-star/outputs/underfit_loss.png"
+}
