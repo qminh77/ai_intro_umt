@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999998 (TeX Live 2026) (preloaded format=xelatex 2026.5.1)  9 JUL 2026 14:30
+This is XeTeX, Version 3.141592653-2.6-0.999998 (TeX Live 2026) (preloaded format=xelatex 2026.5.1)  9 JUL 2026 14:58
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1729,29 +1729,22 @@ Overfull \hbox (0.34258pt too wide) in paragraph at lines 648--649
 t rồi thông qua \TU/texgyrecursor(0)/m/n/12 tf.lite.Interpreter
  []
 
-[12] [13]
+[12]
 File: ../outputs/demo_path.png Graphic file (type bmp)
 <../outputs/demo_path.png>
- [14] [15] [16] (./ann_astar_report.aux)
+ [13] [14] [15] [16] (./ann_astar_report.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
  ***********
-
-
-Package rerunfilecheck Warning: File `ann_astar_report.out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `ann_astar_report.out':
-(rerunfilecheck)             Before: 125729F9BB509DE8EEBF4B9B8535CB8D;7587
-(rerunfilecheck)             After:  B207986C498B3F9122F5E6881101CD3A;7739.
+Package rerunfilecheck Info: File `ann_astar_report.out' has not changed.
+(rerunfilecheck)             Checksum: B207986C498B3F9122F5E6881101CD3A;7739.
  ) 
 Here is how much of TeX's memory you used:
- 36638 strings out of 468168
- 766833 string characters out of 5432816
- 1368392 words of memory out of 5000000
- 64813 multiletter control sequences out of 15000+600000
+ 36634 strings out of 468168
+ 766737 string characters out of 5432816
+ 1368544 words of memory out of 5000000
+ 64809 multiletter control sequences out of 15000+600000
  631422 words of font info for 94 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
  84i,13n,107p,549b,969s stack positions out of 10000i,1000n,20000p,200000b,200000s
