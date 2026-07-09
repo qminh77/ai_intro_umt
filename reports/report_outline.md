@@ -120,6 +120,7 @@ Chèn hình:
 
 - `outputs/demo_path.png`
 - UI tương tác: `src/ui.py`, chạy bằng `python -m src.ui`.
+- Khi bấm chạy thuật toán, UI tự animate node đã duyệt, đánh số thứ tự node và có chế độ xem cả 3 path bằng 3 màu thuật toán.
 
 | Thuật toán | Tìm thấy đường | Độ dài đường đi | Node đã duyệt | Thời gian |
 | --- | --- | ---: | ---: | ---: |
@@ -131,17 +132,17 @@ Chèn hình:
 
 - BFS đảm bảo tìm đường ngắn nhất nhưng duyệt nhiều node.
 - A* + Manhattan duyệt ít node hơn BFS.
-- A* + ANN có thể giảm node duyệt trong một số trường hợp.
-- ANN heuristic không đảm bảo luôn tối ưu vì có thể dự đoán sai.
+- A* + ANN giảm node duyệt trong demo minh họa.
+- Input ANN còn cục bộ vì chỉ dùng tín hiệu tường lân cận.
 
-## 14. Mức độ sử dụng AI và sản phẩm nộp
+## 14. Mức độ sử dụng AI và thông tin mã nguồn
 
-- AI hỗ trợ tạo khung project, gợi ý cấu trúc code và cách trình bày.
-- Nhóm tự chạy code, đọc kết quả, điền số liệu và giải thích kết quả thực nghiệm.
-- Sản phẩm gồm báo cáo PDF, slide, source code, UI tương tác, dataset, model, outputs và README.
+- AI hỗ trợ tạo khung mã nguồn, gợi ý cấu trúc code và cách trình bày.
+- Phần phân tích chính gồm thiết kế input/output, sinh map ngẫu nhiên, gán nhãn bằng BFS, dùng Keras và giải thích kết quả.
+- Thông tin mã nguồn gồm `src/`, `src/ui.py`, `data/`, `models/`, `outputs/`, `requirements.txt` và `README.md`.
 
 ## 15. Kết luận
 
-- Project thể hiện được cách ANN học từ dữ liệu được gán nhãn bởi thuật toán truyền thống.
+- Đề tài thể hiện được cách ANN học từ dữ liệu được gán nhãn bởi thuật toán truyền thống.
 - ANN được ứng dụng làm heuristic cho A*.
 - Kết quả cho thấy sự giao thoa giữa AI hiện đại và thuật toán tìm kiếm cổ điển.

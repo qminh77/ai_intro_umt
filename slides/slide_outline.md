@@ -106,6 +106,7 @@ true_distance
 
 - Chèn `outputs/demo_path.png`.
 - Có UI tương tác tại `src/ui.py`, chạy bằng `python -m src.ui`.
+- Khi bấm chạy thuật toán, UI tự animate node đã duyệt, đánh số thứ tự và vẽ 3 path bằng 3 màu thuật toán.
 - BFS: 104 nodes.
 - A* Manhattan: 46 nodes.
 - A* ANN: 33 nodes.
@@ -113,11 +114,10 @@ true_distance
 ## Slide 17: Nhận xét và hạn chế
 
 - A* + ANN giảm node duyệt trong demo.
-- ANN không đảm bảo luôn tối ưu.
 - Input còn cục bộ, chưa nhìn toàn bộ mê cung.
 
 ## Slide 18: Kết luận và minh bạch AI
 
-- Project thể hiện sự kết hợp giữa AI hiện đại và thuật toán cổ điển.
+- Đề tài thể hiện sự kết hợp giữa ANN huấn luyện bằng Keras và thuật toán A*.
 - AI hỗ trợ khung code/debug/tổ chức nội dung.
 - Nhóm tự chạy code, đọc kết quả và giải thích cấu hình.

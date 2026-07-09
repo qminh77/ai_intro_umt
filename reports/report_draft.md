@@ -153,7 +153,7 @@ MAE trung bình là 2.223. Kết quả này cho thấy mô hình có sai số t�
 
 ## 10. Tích hợp ANN vào A*
 
-Sau khi huấn luyện, mô hình good fit được lưu lại và dùng làm heuristic cho A*. Khi A* cần đánh giá một node, hệ thống chuyển trạng thái đó thành vector 10 đặc trưng rồi gọi ANN để dự đoán chi phí còn lại.
+Sau khi huấn luyện bằng Keras, mô hình good fit được lưu lại và dùng làm heuristic cho A*. Khi A* cần đánh giá một node, hệ thống chuyển trạng thái đó thành vector 10 đặc trưng rồi gọi ANN để dự đoán chi phí còn lại.
 
 So sánh:
 
@@ -162,7 +162,7 @@ A* truyền thống: f(n) = g(n) + h_manhattan(n)
 A* + ANN:        f(n) = g(n) + h_ANN(n)
 ```
 
-ANN heuristic không đảm bảo luôn tối ưu như một heuristic admissible. Vì ANN có thể dự đoán sai hoặc dự đoán lớn hơn khoảng cách thật, đường đi tìm được không được đảm bảo tối ưu tuyệt đối trong mọi trường hợp. Do đó, nhóm đánh giá bằng thực nghiệm thay vì khẳng định ANN luôn tốt hơn.
+Trong phần này, ANN chỉ thay hàm heuristic của A*. Các phần khác của thuật toán A* vẫn giữ nguyên để có thể so sánh trực tiếp với A* + Manhattan.
 
 ## 11. Kết quả demo
 
@@ -172,7 +172,7 @@ Demo dùng cùng một mê cung cho ba thuật toán:
 - A* + Manhattan
 - A* + ANN
 
-Ngoài ảnh demo tĩnh, project có thêm UI tương tác trong `src/ui.py`. UI cho phép random map, chạy từng thuật toán hoặc chạy tất cả, xem lại node đã duyệt, đường đi cuối cùng, số node và thời gian chạy.
+Ngoài ảnh demo tĩnh, project có thêm UI tương tác trong `src/ui.py`. Khi bấm chạy một thuật toán hoặc chạy tất cả, UI tự động animate quá trình duyệt node, đánh số thứ tự node đã duyệt, sau đó hiển thị đường đi cuối cùng. UI cũng có chế độ xem đường đi của cả 3 thuật toán và so sánh số node/thời gian chạy. Ba màu chính là xanh dương cho BFS, cam cho A* + Manhattan và tím cho A* + ANN.
 
 Kết quả:
 
@@ -192,14 +192,13 @@ Hình demo:
 
 Ưu điểm:
 
-- Dataset được tạo tự động bằng BFS, không cần gán nhãn thủ công.
+- Dataset được tạo từ map ngẫu nhiên; BFS dùng để gán nhãn `true_distance`, không cần gán nhãn thủ công.
 - Project minh họa rõ underfitting, overfitting và good fit.
 - ANN được dùng trong một bài toán thuật toán cụ thể, không chỉ train mô hình độc lập.
 
 Hạn chế:
 
 - ANN chỉ nhìn bốn ô xung quanh nên chưa hiểu toàn bộ cấu trúc mê cung.
-- ANN heuristic không đảm bảo tối ưu tuyệt đối.
 - Thời gian A* + ANN cao hơn Manhattan vì phải gọi mô hình suy luận.
 
 Hướng phát triển:
@@ -208,30 +207,26 @@ Hướng phát triển:
 - Train trên nhiều mê cung hơn.
 - So sánh thêm với Greedy Best-First Search hoặc Weighted A*.
 
-## 13. Mức độ sử dụng AI hỗ trợ
+## 13. Mức độ sử dụng công cụ AI
 
-AI được dùng để hỗ trợ:
+Công cụ AI được dùng để hỗ trợ:
 
-- Gợi ý cấu trúc project.
+- Gợi ý cấu trúc mã nguồn.
 - Sinh khung code ban đầu.
 - Hỗ trợ debug và tổ chức báo cáo.
 
-Nhóm tự chịu trách nhiệm chạy lại code, đọc kết quả thật, chỉnh sửa nội dung báo cáo/slide bằng lời của mình và hiểu rõ từng phần code để trả lời phản biện.
+Các quyết định chuyên môn chính gồm thiết kế input/output của ANN, cách sinh map ngẫu nhiên, cách BFS gán nhãn `true_distance`, cấu hình thí nghiệm và phân tích kết quả thực nghiệm.
 
-## 14. Sản phẩm nộp
+## 14. Thông tin mã nguồn
 
-- Báo cáo PDF: `reports/ann_astar_report.pdf`
-- Báo cáo nguồn LaTeX: `reports/ann_astar_report.tex`
-- Slide nội dung: `slides/slide_content.md`
 - Source code: thư mục `src/`
 - UI tương tác: `src/ui.py`
 - Dataset: `data/maze_dataset.csv`
 - Model đã train: thư mục `models/`
 - Biểu đồ/kết quả: thư mục `outputs/`
+- Thư viện phụ thuộc: `requirements.txt`
 - Hướng dẫn chạy: `README.md`
 
 ## 15. Kết luận
 
-Đề tài đã xây dựng được một hệ thống hoàn chỉnh gồm sinh mê cung, tạo dataset bằng BFS, huấn luyện ANN, minh họa underfitting/overfitting/good fit và tích hợp ANN vào A*. Kết quả demo cho thấy ANN có thể đóng vai trò heuristic học từ dữ liệu và giúp A* giảm số node duyệt trong một số trường hợp.
-
-Tuy nhiên, ANN không thay thế hoàn toàn heuristic truyền thống vì không đảm bảo tính tối ưu. Kết quả phù hợp nhất nên được hiểu là một minh họa cho sự kết hợp giữa AI hiện đại và thuật toán tìm kiếm cổ điển.
+Đề tài đã xây dựng được một hệ thống hoàn chỉnh gồm sinh map ngẫu nhiên, gán nhãn bằng BFS, huấn luyện ANN bằng Keras, minh họa underfitting/overfitting/good fit và tích hợp ANN vào A*. Kết quả demo cho thấy ANN có thể đóng vai trò heuristic học từ dữ liệu và giúp A* giảm số node duyệt trong mê cung minh họa.

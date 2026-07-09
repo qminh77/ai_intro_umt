@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999998 (TeX Live 2026) (preloaded format=xelatex 2026.5.1)  9 JUL 2026 13:36
+This is XeTeX, Version 3.141592653-2.6-0.999998 (TeX Live 2026) (preloaded format=xelatex 2026.5.1)  9 JUL 2026 14:30
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1689,13 +1689,27 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 \tf@toc=\write5
 \openout5 = `ann_astar_report.toc'.
 
- [2] [3] [4] [5] [6]
+ [2]
 LaTeX Font Info:    Font shape `TU/texgyrecursor(0)/m/n' will be
-(Font)              scaled to size 11.39996pt on input line 397.
- [7]
+(Font)              scaled to size 11.39996pt on input line 256.
+ [3] [4] [5] [6]
+Overfull \hbox (2.28073pt too wide) in paragraph at lines 439--440
+[]\TU/texgyrecursor(0)/m/n/12 dataset.py\TU/texgyrepagella(0)/m/n/12 : chọn goa
+l, chạy BFS để gán nhãn \TU/texgyrecursor(0)/m/n/12 true_distance\TU/texgyrepag
+ella(0)/m/n/12 , sau đó tạo dataset. 
+ []
+
+[7]
 LaTeX Font Info:    Font shape `TU/texgyrecursor(0)/m/n' will be
-(Font)              scaled to size 10.40245pt on input line 482.
- [8] [9] [10]
+(Font)              scaled to size 10.40245pt on input line 483.
+ [8]
+Overfull \hbox (6.25359pt too wide) in paragraph at lines 560--561
+\TU/texgyrepagella(0)/m/n/12 bằng Keras API thông qua TensorFlow, cụ thể trong 
+code sử dụng \TU/texgyrecursor(0)/m/n/12 tf.keras.Sequential\TU/texgyrepagella(
+0)/m/n/12 ,
+ []
+
+[9] [10]
 File: ../outputs/underfit_loss.png Graphic file (type bmp)
 <../outputs/underfit_loss.png>
 File: ../outputs/overfit_loss.png Graphic file (type bmp)
@@ -1703,25 +1717,43 @@ File: ../outputs/overfit_loss.png Graphic file (type bmp)
  [11]
 File: ../outputs/goodfit_loss.png Graphic file (type bmp)
 <../outputs/goodfit_loss.png>
- [12]
+
+Overfull \hbox (15.11043pt too wide) in paragraph at lines 648--649
+\TU/texgyrepagella(0)/m/n/12 Sau khi train bằng Keras, mô hình good fit được lư
+u tại $[][][][][][] [] [][][] [] [][][][][][][][][] [] [][][][][][][] []
+ []
+
+
+Overfull \hbox (0.34258pt too wide) in paragraph at lines 648--649
+\TU/texgyrepagella(0)/m/n/12 thống chuyển trạng thái hiện tại thành vector inpu
+t rồi thông qua \TU/texgyrecursor(0)/m/n/12 tf.lite.Interpreter
+ []
+
+[12] [13]
 File: ../outputs/demo_path.png Graphic file (type bmp)
 <../outputs/demo_path.png>
-
-[13] [14] [15] [16] [17] (./ann_astar_report.aux)
+ [14] [15] [16] (./ann_astar_report.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
  ***********
-Package rerunfilecheck Info: File `ann_astar_report.out' has not changed.
-(rerunfilecheck)             Checksum: 93847B4CA3B1FCA9A44E61169D244308;7485.
+
+
+Package rerunfilecheck Warning: File `ann_astar_report.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+Package rerunfilecheck Info: Checksums for `ann_astar_report.out':
+(rerunfilecheck)             Before: 125729F9BB509DE8EEBF4B9B8535CB8D;7587
+(rerunfilecheck)             After:  B207986C498B3F9122F5E6881101CD3A;7739.
  ) 
 Here is how much of TeX's memory you used:
- 36644 strings out of 468168
- 766959 string characters out of 5432816
- 1366290 words of memory out of 5000000
- 64819 multiletter control sequences out of 15000+600000
+ 36638 strings out of 468168
+ 766833 string characters out of 5432816
+ 1368392 words of memory out of 5000000
+ 64813 multiletter control sequences out of 15000+600000
  631422 words of font info for 94 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 84i,13n,107p,490b,969s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 84i,13n,107p,549b,969s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on ann_astar_report.pdf (18 pages).
+Output written on ann_astar_report.pdf (17 pages).

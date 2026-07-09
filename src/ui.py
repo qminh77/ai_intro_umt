@@ -19,6 +19,22 @@ BFS_NAME = "BFS"
 MANHATTAN_NAME = "A* + Manhattan"
 ANN_NAME = "A* + ANN"
 ALGORITHM_ORDER = (BFS_NAME, MANHATTAN_NAME, ANN_NAME)
+ALL_VIEW = "All algorithms"
+ALGORITHM_COLORS = {
+    BFS_NAME: (37, 99, 235),
+    MANHATTAN_NAME: (245, 158, 11),
+    ANN_NAME: (124, 58, 237),
+}
+ALGORITHM_SOFT_COLORS = {
+    BFS_NAME: (191, 219, 254),
+    MANHATTAN_NAME: (254, 215, 170),
+    ANN_NAME: (221, 214, 254),
+}
+PATH_OFFSETS = {
+    BFS_NAME: (-5, -5),
+    MANHATTAN_NAME: (0, 0),
+    ANN_NAME: (5, 5),
+}
 
 
 @dataclass(frozen=True)
@@ -55,6 +71,7 @@ class MazeUi:
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont("arial", 18)
         self.small_font = pygame.font.SysFont("arial", 15)
+        self.tiny_font = pygame.font.SysFont("arial", 10, bold=True)
         self.title_font = pygame.font.SysFont("arial", 28, bold=True)
         self.bold_font = pygame.font.SysFont("arial", 18, bold=True)
 
@@ -68,7 +85,13 @@ class MazeUi:
         self.start: Position
         self.goal: Position
         self.results: dict[str, SearchResult] = {}
-        self.selected_algorithm: str | None = None
+        self.selected_algorithm: str = ALL_VIEW
+        self.animation_view: str | None = None
+        self.animation_index = 0
+        self.animation_cursor = 0.0
+        self.animation_nodes_per_second = 35.0
+        self.animating = False
+        self.show_numbers = True
         self.ann_heuristic: AnnHeuristic | None = None
         self.message = "Ready. Press R to randomize or A to run all."
         self.random_map()
@@ -76,6 +99,7 @@ class MazeUi:
     def run(self) -> None:
         running = True
         while running:
+            dt_ms = self.clock.tick(60)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -84,9 +108,9 @@ class MazeUi:
                 elif event.type == pygame.KEYDOWN:
                     self._handle_key(event.key)
 
+            self.update_animation(dt_ms)
             self.draw()
             pygame.display.flip()
-            self.clock.tick(60)
 
         pygame.quit()
 
@@ -105,11 +129,12 @@ class MazeUi:
         )
         self.map_index += 1
         self.results = {}
-        self.selected_algorithm = None
+        self.selected_algorithm = ALL_VIEW
         self.ann_heuristic = None
+        self._reset_animation()
         self.message = f"Map #{self.map_index}: random maze generated."
 
-    def run_algorithm(self, algorithm: str) -> None:
+    def run_algorithm(self, algorithm: str, auto_animate: bool = True) -> None:
         if algorithm == BFS_NAME:
             result = bfs_path(self.maze, self.start, self.goal)
         elif algorithm == MANHATTAN_NAME:
@@ -148,21 +173,55 @@ class MazeUi:
             f"{result.algorithm}: {status}, length={result.path_length}, "
             f"nodes={result.explored_nodes}, time={result.elapsed_ms:.2f} ms"
         )
+        if auto_animate:
+            self._start_animation(result.algorithm)
 
     def run_all(self) -> None:
-        self.run_algorithm(BFS_NAME)
-        self.run_algorithm(MANHATTAN_NAME)
+        self.run_algorithm(BFS_NAME, auto_animate=False)
+        self.run_algorithm(MANHATTAN_NAME, auto_animate=False)
         if self.model_available:
-            self.run_algorithm(ANN_NAME)
-        self.selected_algorithm = next(
-            (name for name in reversed(ALGORITHM_ORDER) if name in self.results),
-            None,
-        )
+            self.run_algorithm(ANN_NAME, auto_animate=False)
+        self.selected_algorithm = ALL_VIEW
+        self._start_animation(ALL_VIEW)
+        self.message = "Running animation for all available algorithms."
 
     def clear_results(self) -> None:
         self.results = {}
-        self.selected_algorithm = None
+        self.selected_algorithm = ALL_VIEW
+        self._reset_animation()
         self.message = "Cleared results for current map."
+
+    def update_animation(self, dt_ms: int) -> None:
+        if not self.animating or self.animation_view is None:
+            return
+
+        limit = self._animation_limit(self.animation_view)
+        if limit <= 0:
+            self.animating = False
+            return
+
+        self.animation_cursor += self.animation_nodes_per_second * (dt_ms / 1000)
+        self.animation_index = min(limit, int(self.animation_cursor))
+        if self.animation_index >= limit:
+            self.animating = False
+            self.message = f"Animation finished: {self.animation_view}."
+
+    def _start_animation(self, view: str) -> None:
+        limit = self._animation_limit(view)
+        if limit <= 0:
+            self._reset_animation()
+            return
+
+        self.animation_view = view
+        self.animation_cursor = 0.0
+        self.animation_index = 0
+        self.animating = True
+
+    def _reset_animation(self) -> None:
+        self.animation_view = None
+        self.animation_index = 0
+        self.animation_cursor = 0.0
+        self.animating = False
 
     def draw(self) -> None:
         self.screen.fill((241, 245, 249))
@@ -175,14 +234,14 @@ class MazeUi:
         x2 = 910
         y = 88
         width = 210
-        height = 38
-        gap = 12
+        height = 34
+        gap = 8
         rows = [
             ((x1, "Random Map [R]", "random"), (x2, "Clear [C]", "clear")),
             ((x1, "Run All [A]", "run_all"), (x2, "Run BFS [1]", "run_bfs")),
             ((x1, "Run A* Man [2]", "run_manhattan"), (x2, "Run ANN [3]", "run_ann")),
-            ((x1, "Show BFS", "show_bfs"), (x2, "Show Manhattan", "show_manhattan")),
-            ((x1, "Show ANN", "show_ann"),),
+            ((x1, "Show All [0]", "show_all"), (x2, "Show BFS", "show_bfs")),
+            ((x1, "Show Manhattan", "show_manhattan"), (x2, "Show ANN", "show_ann")),
         ]
 
         buttons: list[Button] = []
@@ -211,6 +270,8 @@ class MazeUi:
             self.run_algorithm(ANN_NAME)
         elif key == pygame.K_c:
             self.clear_results()
+        elif key == pygame.K_0:
+            self._select_result(ALL_VIEW)
 
     def _dispatch(self, action: str) -> None:
         if action == "random":
@@ -225,6 +286,8 @@ class MazeUi:
             self.run_algorithm(MANHATTAN_NAME)
         elif action == "run_ann":
             self.run_algorithm(ANN_NAME)
+        elif action == "show_all":
+            self._select_result(ALL_VIEW)
         elif action == "show_bfs":
             self._select_result(BFS_NAME)
         elif action == "show_manhattan":
@@ -233,13 +296,20 @@ class MazeUi:
             self._select_result(ANN_NAME)
 
     def _select_result(self, algorithm: str) -> None:
-        if algorithm in self.results:
+        if algorithm == ALL_VIEW:
+            self.selected_algorithm = ALL_VIEW
+            self._reset_animation()
+            self.message = "Showing all available paths."
+        elif algorithm in self.results:
             self.selected_algorithm = algorithm
+            self._reset_animation()
             self.message = f"Showing {algorithm}."
 
     def _button_enabled(self, action: str) -> bool:
         if action == "run_ann":
             return self.model_available and self.ann_error is None
+        if action == "show_all":
+            return bool(self.results)
         if action == "show_bfs":
             return BFS_NAME in self.results
         if action == "show_manhattan":
@@ -275,17 +345,30 @@ class MazeUi:
 
         for row in range(rows):
             for col in range(cols):
-                color = (255, 255, 255) if self.maze[row, col] != WALL else (15, 23, 42)
+                color = (248, 250, 252) if self.maze[row, col] != WALL else (30, 41, 59)
                 pygame.draw.rect(
                     self.screen,
                     color,
                     pygame.Rect(left + col * cell, top + row * cell, cell, cell),
                 )
 
-        result = self._selected_result()
-        if result is not None:
-            self._draw_explored_nodes(result, left, top, cell)
-            self._draw_path(result, left, top, cell)
+        if self.selected_algorithm == ALL_VIEW:
+            self._draw_all_algorithm_view(left, top, cell)
+        else:
+            result = self.results.get(self.selected_algorithm)
+            if result is not None:
+                visible_count = self._visible_explored_count(self.selected_algorithm)
+                self._draw_explored_nodes(
+                    result,
+                    self.selected_algorithm,
+                    visible_count,
+                    left,
+                    top,
+                    cell,
+                    show_numbers=self.show_numbers,
+                )
+                if self._should_draw_path(self.selected_algorithm):
+                    self._draw_path(result, self.selected_algorithm, left, top, cell)
 
         for row in range(rows + 1):
             y = top + row * cell
@@ -294,42 +377,82 @@ class MazeUi:
             x = left + col * cell
             pygame.draw.line(self.screen, (226, 232, 240), (x, top), (x, top + grid_height))
 
-        self._draw_marker(self.start, left, top, cell, (34, 197, 94), "S")
-        self._draw_marker(self.goal, left, top, cell, (59, 130, 246), "G")
+        self._draw_marker(self.start, left, top, cell, (15, 23, 42), "S")
+        self._draw_marker(self.goal, left, top, cell, (100, 116, 139), "G")
+
+    def _draw_all_algorithm_view(self, left: int, top: int, cell: int) -> None:
+        animate_all = self.animation_view == ALL_VIEW and (
+            self.animating or self.animation_index > 0
+        )
+        for algorithm in ALGORITHM_ORDER:
+            result = self.results.get(algorithm)
+            if result is None:
+                continue
+            if animate_all:
+                visible_count = self._visible_explored_count(algorithm)
+                self._draw_explored_nodes(
+                    result,
+                    algorithm,
+                    visible_count,
+                    left,
+                    top,
+                    cell,
+                    show_numbers=False,
+                )
+            if self._should_draw_path(algorithm):
+                self._draw_path(result, algorithm, left, top, cell, offset=True)
 
     def _draw_explored_nodes(
         self,
         result: SearchResult,
+        algorithm: str,
+        visible_count: int,
         left: int,
         top: int,
         cell: int,
+        show_numbers: bool,
     ) -> None:
-        path_cells = set(result.path)
-        for row, col in result.explored_order:
-            if (row, col) in path_cells or (row, col) in (self.start, self.goal):
+        explored = result.explored_order[:visible_count]
+        soft_color = ALGORITHM_SOFT_COLORS[algorithm]
+        strong_color = ALGORITHM_COLORS[algorithm]
+        for index, (row, col) in enumerate(explored, start=1):
+            if (row, col) in (self.start, self.goal):
                 continue
-            rect = pygame.Rect(left + col * cell + 3, top + row * cell + 3, cell - 6, cell - 6)
-            pygame.draw.rect(self.screen, (147, 197, 253), rect, border_radius=3)
+            center = (left + col * cell + cell // 2, top + row * cell + cell // 2)
+            radius = max(4, cell // 6)
+            pygame.draw.circle(self.screen, soft_color, center, radius)
+            if index == visible_count and self.animating:
+                pygame.draw.circle(self.screen, strong_color, center, radius + 3, width=2)
+
+            if show_numbers and self.selected_algorithm != ALL_VIEW:
+                label = self.tiny_font.render(str(index), True, (15, 23, 42))
+                self.screen.blit(label, label.get_rect(center=center))
 
     def _draw_path(
         self,
         result: SearchResult,
+        algorithm: str,
         left: int,
         top: int,
         cell: int,
+        offset: bool = False,
     ) -> None:
         if not result.path:
             return
 
+        dx, dy = PATH_OFFSETS[algorithm] if offset else (0, 0)
         centers = [
-            (left + col * cell + cell // 2, top + row * cell + cell // 2)
+            (left + col * cell + cell // 2 + dx, top + row * cell + cell // 2 + dy)
             for row, col in result.path
         ]
         if len(centers) > 1:
-            pygame.draw.lines(self.screen, (239, 68, 68), False, centers, max(3, cell // 5))
-        for row, col in result.path:
-            rect = pygame.Rect(left + col * cell + 6, top + row * cell + 6, cell - 12, cell - 12)
-            pygame.draw.rect(self.screen, (248, 113, 113), rect, border_radius=4)
+            pygame.draw.lines(
+                self.screen,
+                ALGORITHM_COLORS[algorithm],
+                False,
+                centers,
+                max(4, cell // 6),
+            )
 
     def _draw_marker(
         self,
@@ -355,19 +478,21 @@ class MazeUi:
         for button in self.buttons:
             self._draw_button(button)
 
-        y = 360
+        y = 326
         self._draw_text("Map", 680, y, self.bold_font, (15, 23, 42))
         y += 30
         self._draw_text(f"Map #{self.map_index} | size: {self.args.height}x{self.args.width}", 680, y)
         y += 24
         self._draw_text(f"Start: {self.start} | Goal: {self.goal}", 680, y)
         y += 24
-        selected = self.selected_algorithm or "None"
-        self._draw_text(f"Selected view: {selected}", 680, y)
+        self._draw_text(f"View: {self.selected_algorithm}", 680, y)
+        y += 24
+        animation = "playing" if self.animating else "paused/off"
+        self._draw_text(f"Animation: {animation} | Node order: auto", 680, y)
 
-        y += 42
+        y += 32
         self._draw_results_table(y)
-        self._draw_legend(606)
+        self._draw_legend(596)
 
         message_rect = pygame.Rect(680, 675, 438, 42)
         pygame.draw.rect(self.screen, (241, 245, 249), message_rect, border_radius=8)
@@ -388,7 +513,7 @@ class MazeUi:
         for algorithm in ALGORITHM_ORDER:
             row_rect = pygame.Rect(672, y - 4, 455, 28)
             if algorithm == self.selected_algorithm:
-                pygame.draw.rect(self.screen, (219, 234, 254), row_rect, border_radius=6)
+                pygame.draw.rect(self.screen, ALGORITHM_SOFT_COLORS[algorithm], row_rect, border_radius=6)
 
             result = self.results.get(algorithm)
             if result is None:
@@ -402,17 +527,17 @@ class MazeUi:
                     f"{result.elapsed_ms:.2f} ms",
                 )
             for x, value in zip(xs, values, strict=True):
-                self._draw_text(value, x, y, self.small_font, (15, 23, 42))
+                color = ALGORITHM_COLORS[algorithm] if x == xs[0] else (15, 23, 42)
+                self._draw_text(value, x, y, self.small_font, color)
             y += 30
 
     def _draw_legend(self, y: int) -> None:
         self._draw_text("Legend", 680, y, self.bold_font, (15, 23, 42))
         entries = [
-            ((15, 23, 42), "Wall"),
-            ((147, 197, 253), "Explored node"),
-            ((248, 113, 113), "Final path"),
-            ((34, 197, 94), "Start"),
-            ((59, 130, 246), "Goal"),
+            (ALGORITHM_COLORS[BFS_NAME], "BFS"),
+            (ALGORITHM_COLORS[MANHATTAN_NAME], "A* Manhattan"),
+            (ALGORITHM_COLORS[ANN_NAME], "A* ANN"),
+            ((30, 41, 59), "Wall"),
         ]
         y += 28
         for index, (color, label) in enumerate(entries):
@@ -462,10 +587,32 @@ class MazeUi:
         if line:
             self._draw_text(line, x, y, font, color)
 
-    def _selected_result(self) -> SearchResult | None:
-        if self.selected_algorithm is None:
-            return None
-        return self.results.get(self.selected_algorithm)
+    def _visible_explored_count(self, algorithm: str) -> int:
+        result = self.results.get(algorithm)
+        if result is None:
+            return 0
+        if self.animation_view in (algorithm, ALL_VIEW):
+            return min(self.animation_index, len(result.explored_order))
+        return len(result.explored_order)
+
+    def _animation_limit(self, view: str) -> int:
+        if view == ALL_VIEW:
+            return max(
+                (len(result.explored_order) for result in self.results.values()),
+                default=0,
+            )
+        result = self.results.get(view)
+        if result is None:
+            return 0
+        return len(result.explored_order)
+
+    def _should_draw_path(self, algorithm: str) -> bool:
+        result = self.results.get(algorithm)
+        if result is None:
+            return False
+        if self.animation_view in (algorithm, ALL_VIEW):
+            return self.animation_index >= len(result.explored_order)
+        return True
 
 
 def main() -> None:

@@ -134,7 +134,7 @@ Trung bình: MAE = 2.223, MSE = 14.859.
 
 Chèn hình `outputs/demo_path.png`.
 
-Demo tương tác: chạy `python -m src.ui` để random map, chạy từng thuật toán và xem node đã duyệt/path trực tiếp.
+Demo tương tác: chạy `python -m src.ui`. Khi bấm chạy thuật toán, UI tự animate node đã duyệt, đánh số thứ tự node và có thể xem path của cả 3 thuật toán bằng 3 màu riêng.
 
 | Thuật toán | Độ dài | Node duyệt | Thời gian |
 | --- | ---: | ---: | ---: |
@@ -145,13 +145,12 @@ Demo tương tác: chạy `python -m src.ui` để random map, chạy từng thu
 ## Slide 17: Nhận xét và hạn chế
 
 - A* + ANN duyệt ít node nhất trong demo này.
-- ANN heuristic không đảm bảo admissible, nên không đảm bảo luôn tối ưu trong mọi mê cung.
 - ANN chỉ dùng 4 ô lân cận, chưa nhìn toàn bộ cấu trúc mê cung.
 - Thời gian inference cao hơn Manhattan nhưng vẫn dưới 1 ms trong demo.
 
 ## Slide 18: Kết luận và minh bạch AI
 
-- ANN có thể học heuristic từ dữ liệu sinh bằng BFS.
+- Map được sinh ngẫu nhiên; BFS dùng để gán nhãn `true_distance` cho ANN.
 - Good fit tốt hơn underfit và overfit nhờ cấu hình vừa phải, Dropout và EarlyStopping.
-- Project đáp ứng yêu cầu kết hợp ANN với thuật toán truyền thống A*.
+- ANN được xây dựng bằng Keras (`tf.keras`) và tích hợp với thuật toán A*.
 - AI được dùng để hỗ trợ khung code/debug/tổ chức báo cáo; nhóm tự chạy lại kết quả, chỉnh cấu hình và giải thích số liệu.

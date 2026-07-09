@@ -23,7 +23,7 @@ Dự án cũng đồng thời là một bài thực hành để hiểu các khá
 
 ```text
 maze-ann-a-star/
-├── data/                  # Dataset CSV sinh ra từ thuật toán BFS để làm nhãn học
+├── data/                  # Dataset CSV: map ngẫu nhiên, nhãn true_distance do BFS tính
 ├── models/                # Các file model Keras (.keras) và TensorFlow Lite (.tflite)
 ├── outputs/               # Biểu đồ loss, metrics, ảnh demo và log kết quả huấn luyện
 ├── reports/               # Báo cáo và phân tích chuyên sâu
@@ -33,7 +33,7 @@ maze-ann-a-star/
 │   ├── maze.py            # Khởi tạo và thao tác trên lưới mê cung
 │   ├── search.py          # Triển khai thuật toán BFS, A* và heuristic Manhattan
 │   ├── features.py        # Trích xuất đặc trưng (Feature extraction) từ trạng thái mê cung
-│   ├── dataset.py         # Xây dựng dataset với nhãn được đánh bằng BFS
+│   ├── dataset.py         # Chọn goal, chạy BFS để gán nhãn true_distance
 │   ├── generate_dataset.py# Script tự động sinh hàng loạt dataset
 │   ├── models.py          # Định nghĩa 3 kiến trúc mạng ANN (Underfit, Overfit, Goodfit)
 │   ├── train.py           # Script huấn luyện mô hình
@@ -76,19 +76,19 @@ Project vẫn dùng **5-fold cross-validation** để kiểm tra độ ổn đ�
 ## 4. Dữ liệu (Dataset)
 
 Để mạng nơ-ron học được khoảng cách, chúng ta cần một tập dữ liệu (dataset) có gán nhãn. Quá trình tạo dữ liệu diễn ra như sau:
-1. **Tạo mê cung ngẫu nhiên**: Sinh các lưới với các vật cản (tường) phân bố ngẫu nhiên.
-2. **Trích xuất đặc trưng (Feature Extraction)**: Mỗi trạng thái được chuyển thành một vector gồm 10 chiều:
+1. **Tạo mê cung ngẫu nhiên**: Sinh các lưới 20x20 với vật cản phân bố ngẫu nhiên. BFS không dùng để sinh map.
+2. **Gán nhãn (Labeling)**: Với mỗi map, chọn một goal hợp lệ rồi chạy **BFS từ goal** để tính khoảng cách ngắn nhất đến mọi ô reachable. Khoảng cách này là nhãn `true_distance` dùng để huấn luyện ANN.
+3. **Trích xuất đặc trưng (Feature Extraction)**: Mỗi trạng thái được chuyển thành một vector gồm 10 chiều:
    - Tọa độ hiện tại: `x`, `y`
    - Tọa độ đích: `goal_x`, `goal_y`
    - Vector hướng: `dx = goal_x - x`, `dy = goal_y - y`
    - Cảm biến tường xung quanh (4 chiều): `up`, `down`, `left`, `right` (giá trị 0 hoặc 1).
-3. **Gán nhãn (Labeling)**: Chạy thuật toán **BFS** từ trạng thái hiện tại đến đích để tìm khoảng cách ngắn nhất thực tế (`true_distance`). Khoảng cách này được dùng làm nhãn (target) để huấn luyện ANN.
 
 ---
 
 ## 5. Mô hình Học Máy (Machine Learning Models)
 
-Dự án thiết kế sẵn 3 kiến trúc mô hình khác nhau để so sánh và làm rõ các hiện tượng trong quá trình huấn luyện:
+Dự án thiết kế sẵn 3 kiến trúc mô hình khác nhau bằng Keras API (`tf.keras`) để so sánh và làm rõ các hiện tượng trong quá trình huấn luyện:
 
 | Tên Thí Nghiệm | Kiến trúc Mạng (Các lớp Dense) | Số Epoch | Dữ liệu Train | Kỹ thuật dùng | Mục đích Minh họa |
 | :--- | :--- | :---: | :---: | :--- | :--- |
@@ -118,7 +118,7 @@ python -m pip install -r requirements.txt
 ### 6.2. Pipeline Chạy Dự án
 
 **Bước 1: Sinh dữ liệu huấn luyện (Generate Dataset)**
-Sinh ngẫu nhiên 500 mê cung, mỗi mê cung lấy tối đa 200 mẫu. File đầu ra: `data/maze_dataset.csv`.
+Sinh ngẫu nhiên 500 mê cung, dùng BFS để gán nhãn `true_distance`, mỗi mê cung lấy tối đa 200 mẫu. File đầu ra: `data/maze_dataset.csv`.
 ```bash
 python -m src.generate_dataset --mazes 500 --max-samples-per-maze 200
 ```
@@ -143,10 +143,15 @@ python -m src.demo
 Kết quả sẽ xuất ra terminal dạng bảng metrics và lưu hình ảnh vào `outputs/demo_path.png`.
 
 **Bước 5: Chạy UI tương tác (Interactive UI)**
-Mở cửa sổ điều khiển để random map, chạy từng thuật toán hoặc chạy tất cả, xem node đã duyệt, đường đi cuối cùng, thời gian và số node.
+Mở cửa sổ điều khiển để random map, chạy từng thuật toán hoặc chạy tất cả. Khi bấm chạy, UI tự động animate quá trình duyệt node, đánh số thứ tự node đã duyệt, sau đó hiển thị đường đi cuối cùng, thời gian và số node.
 ```bash
 python -m src.ui
 ```
+
+Màu thuật toán trong UI:
+- **BFS**: xanh dương
+- **A* + Manhattan**: cam
+- **A* + ANN**: tím
 
 Phím tắt trong UI:
 - `R`: random map mới
@@ -154,6 +159,7 @@ Phím tắt trong UI:
 - `1`: chạy BFS
 - `2`: chạy A* + Manhattan
 - `3`: chạy A* + ANN
+- `0`: hiển thị đường đi của cả 3 thuật toán
 - `C`: xóa kết quả trên map hiện tại
 
 ---
@@ -207,7 +213,7 @@ Kết quả khi đưa 3 thuật toán vào chạy chung một màn chơi:
 | **A* + Manhattan** | Có | 20 | 46 | ~0.07 ms |
 | **A* + ANN (Goodfit)** | Có | 20 | **33** | ~0.48 ms* |
 
-*(Ghi chú: Thời gian của ANN được tối ưu hóa cực tốt nhờ sử dụng định dạng TensorFlow Lite (TFLite) thay vì Keras, loại bỏ phần lớn overhead khi suy luận trên CPU.)*
+*(Ghi chú: Mô hình được huấn luyện bằng Keras và export thêm sang TensorFlow Lite để suy luận trong demo A*.)*
 
 **Hình ảnh Demo kết quả tìm đường:**
 
@@ -225,7 +231,7 @@ Kết quả khi đưa 3 thuật toán vào chạy chung một màn chơi:
 
 ## 8. Minh bạch sử dụng AI
 
-AI được dùng để hỗ trợ tạo khung code ban đầu, gợi ý cách tổ chức báo cáo và hỗ trợ debug lỗi cú pháp/môi trường. Các phần cần tự nắm vững khi bảo vệ gồm: thiết kế input/output của ANN, cách sinh nhãn bằng BFS, lý do chia train/validation/test, cách đọc đồ thị loss/MAE, và hạn chế của ANN heuristic.
+AI được dùng để hỗ trợ tạo khung code ban đầu, gợi ý cách tổ chức báo cáo và hỗ trợ debug lỗi cú pháp/môi trường. Các phần cần nắm vững gồm: cách sinh map ngẫu nhiên, cách BFS gán nhãn `true_distance`, thiết kế input/output của ANN, cách dùng Keras (`tf.keras`), lý do chia train/validation/test và cách đọc đồ thị loss/MAE.
 
 ---
 
