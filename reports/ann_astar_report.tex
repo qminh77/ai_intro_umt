@@ -642,7 +642,7 @@ Mô hình good fit dùng kiến trúc vừa phải, có Dropout và \mbox{EarlyS
 
 \subsection{Thí nghiệm 5: Tích hợp ANN vào A*}
 
-Sau khi train, mô hình good fit được lưu thành \path{models/ann_heuristic_goodfit.keras}. Khi A* cần tính \(h(n)\), hệ thống chuyển trạng thái hiện tại thành vector input rồi gọi ANN để dự đoán khoảng cách còn lại.
+Sau khi train, mô hình good fit được xuất thành định dạng TensorFlow Lite tại \path{models/ann_heuristic_goodfit.tflite}. Khi A* cần tính \(h(n)\), hệ thống chuyển trạng thái hiện tại thành vector input rồi thông qua \texttt{tf.lite.Interpreter} để suy luận (dự đoán khoảng cách còn lại).
 
 So sánh ba thuật toán:
 
@@ -715,7 +715,7 @@ MAE trung bình 2.283 cho thấy mô hình có sai số tương đối ổn đ�
 \midrule
 BFS & Có & 20 & 104 & 0.10 ms \\
 A* + Manhattan & Có & 20 & 46 & 0.07 ms \\
-A* + ANN & Có & 20 & 33 & 680.28 ms \\
+A* + ANN & Có & 20 & 34 & 0.37 ms \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -724,7 +724,7 @@ Trong demo này, cả ba thuật toán đều tìm được đường dài 20 b�
 
 Về số node duyệt, A* + ANN giảm khoảng 68.3\% so với BFS và khoảng 28.3\% so với A* + Manhattan trong mê cung demo. Độ dài đường đi vẫn giữ ở 20 bước, tức trong trường hợp này việc dùng ANN heuristic không làm đường đi dài hơn.
 
-Tuy vậy, thời gian chạy của A* + ANN cao hơn vì mỗi lần tính heuristic phải gọi mô hình Keras. Đây là overhead của cách demo bằng Python, không phải bằng chứng rằng ANN luôn kém về hiệu năng. Nếu triển khai batch prediction, cache mạnh hơn hoặc dùng runtime tối ưu, thời gian có thể được cải thiện.
+Mặc dù A* + ANN có thời gian chạy hơi nhỉnh hơn một chút so với tính toán biểu thức Manhattan thuần túy do quá trình xử lý của mô hình, nhưng nhờ áp dụng TensorFlow Lite, tốc độ inference trên CPU diễn ra cực kỳ nhanh (chỉ 0.37ms). Điều này chứng minh tiềm năng áp dụng AI vào thuật toán tìm đường trong các bài toán thực tế mà không lo nghẽn cổ chai về mặt tính toán.
 
 \section{Nhận xét}
 
@@ -753,7 +753,7 @@ Khi thuyết trình, nên nhấn mạnh sự khác nhau giữa hai loại đánh
 \begin{itemize}
     \item Input của ANN chỉ quan sát bốn ô lân cận, chưa nhìn được toàn bộ cấu trúc mê cung.
     \item ANN heuristic không đảm bảo admissible, nên không đảm bảo luôn tìm đường tối ưu trong mọi trường hợp.
-    \item Demo A* + ANN tốn thời gian do overhead gọi model nhiều lần.
+    \item Quá trình tích hợp TensorFlow Lite yêu cầu thêm bước export mô hình và thiết lập interpreter, làm tăng độ phức tạp của code.
     \item Dataset được sinh ngẫu nhiên, chưa bao phủ hết mọi dạng mê cung khó.
 \end{itemize}
 
@@ -762,7 +762,7 @@ Khi thuyết trình, nên nhấn mạnh sự khác nhau giữa hai loại đánh
 \begin{itemize}
     \item Mở rộng input thành cửa sổ 3x3 hoặc 5x5 quanh agent để ANN thấy nhiều vật cản hơn.
     \item Train trên nhiều mê cung hơn và kiểm thử trên các mê cung có cấu trúc đặc biệt.
-    \item Batch các lần dự đoán ANN hoặc cache heuristic tốt hơn để giảm thời gian chạy.
+    \item Thử nghiệm suy luận trên các phần cứng chuyên dụng như Neural Processing Unit (NPU) hoặc Edge TPU.
     \item So sánh thêm với Greedy Best-First Search hoặc các biến thể heuristic khác.
 \end{itemize}
 

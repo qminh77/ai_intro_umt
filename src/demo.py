@@ -24,8 +24,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--model",
         type=Path,
-        default=MODELS_DIR / "ann_heuristic_goodfit.keras",
-        help="Trained Keras model. If absent, A* ANN is skipped.",
+        default=MODELS_DIR / "ann_heuristic_goodfit.tflite",
+        help="Trained TFLite model. If absent, A* ANN is skipped.",
     )
     parser.add_argument("--output", type=Path, default=OUTPUTS_DIR / "demo_path.png")
     parser.add_argument("--metrics", type=Path, default=OUTPUTS_DIR / "demo_metrics.json")

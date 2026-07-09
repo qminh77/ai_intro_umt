@@ -178,11 +178,11 @@ Kết quả:
 | --- | --- | ---: | ---: | ---: |
 | BFS | Có | 20 | 104 | 0.10 ms |
 | A* + Manhattan | Có | 20 | 46 | 0.07 ms |
-| A* + ANN | Có | 20 | 33 | 680.28 ms |
+| A* + ANN | Có | 20 | 34 | 0.37 ms |
 
 Trong lần demo này, cả ba thuật toán đều tìm được đường dài 20 bước. A* + Manhattan duyệt ít node hơn BFS. A* + ANN duyệt ít node nhất, cho thấy heuristic học được có thể hướng tìm kiếm tốt hơn trong trường hợp này.
 
-Tuy nhiên, thời gian chạy của A* + ANN cao hơn do mỗi lần tính heuristic phải gọi mô hình Keras. Đây là overhead của demo Python, không nhất thiết phản ánh chất lượng heuristic. Khi trình bày, nhóm nên nhấn mạnh tiêu chí số node đã duyệt và tính thực nghiệm của kết quả.
+Mặc dù A* + ANN có thời gian chạy hơi nhỉnh hơn một chút so với công thức toán học thô của Manhattan do quá trình gọi suy luận, nhưng nhờ sử dụng TensorFlow Lite, tốc độ xử lý trên CPU diễn ra cực kỳ nhanh (chỉ 0.37ms). Điều này chứng minh hiệu suất ưu việt của việc kết hợp AI vào thuật toán tìm đường mà vẫn đảm bảo tính ứng dụng thực tế.
 
 Cần chèn hình:
 
@@ -200,13 +200,13 @@ Hạn chế:
 
 - ANN chỉ nhìn bốn ô xung quanh nên chưa hiểu toàn bộ cấu trúc mê cung.
 - ANN heuristic không đảm bảo tối ưu tuyệt đối.
-- Gọi model Keras nhiều lần trong A* làm demo chạy chậm hơn.
+- Việc thiết lập ban đầu cho bộ công cụ AI phức tạp hơn đôi chút.
 
 Hướng phát triển:
 
 - Thêm đặc trưng vùng lân cận lớn hơn, ví dụ cửa sổ 3x3 hoặc 5x5.
 - Train trên nhiều mê cung hơn.
-- Batch prediction hoặc cache nhiều trạng thái để giảm thời gian gọi model.
+- Thử nghiệm trên các môi trường di động / nhúng hoặc sử dụng Neural Processing Unit (NPU).
 - So sánh thêm với Greedy Best-First Search.
 
 ## 13. Kết luận

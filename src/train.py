@@ -9,7 +9,7 @@ import pandas as pd
 
 from .config import DATA_DIR, FEATURE_COLUMNS, MODELS_DIR, OUTPUTS_DIR, TARGET_COLUMN
 from .features import split_features_target
-from .models import EXPERIMENTS, build_model, training_callbacks
+from .models import EXPERIMENTS, build_model, import_tensorflow, training_callbacks
 
 
 def parse_args() -> argparse.Namespace:
@@ -101,11 +101,19 @@ def run_experiment(
     test_mse = mean_squared_error(y_test, predictions)
 
     model_path = models_dir / f"ann_heuristic_{experiment}.keras"
+    tflite_path = models_dir / f"ann_heuristic_{experiment}.tflite"
     history_path = outputs_dir / f"{experiment}_history.csv"
     plot_path = outputs_dir / f"{experiment}_loss.png"
     metrics_path = outputs_dir / f"{experiment}_metrics.json"
 
     model.save(model_path)
+
+    # Convert and save TFLite model
+    tf = import_tensorflow()
+    converter = tf.lite.TFLiteConverter.from_keras_model(model)
+    tflite_model = converter.convert()
+    tflite_path.write_bytes(tflite_model)
+
     history_to_dataframe(history).to_csv(history_path, index=False)
     plot_training_history(history, plot_path, title=f"{experiment.title()} Loss")
 
@@ -120,6 +128,7 @@ def run_experiment(
         "test_mae": float(test_mae),
         "test_mse": float(test_mse),
         "model_path": str(model_path),
+        "tflite_path": str(tflite_path),
         "history_path": str(history_path),
         "plot_path": str(plot_path),
     }

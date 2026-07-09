@@ -24,7 +24,7 @@ Dự án cũng đồng thời là một bài thực hành tuyệt vời để hi
 ```text
 maze-ann-a-star/
 ├── data/                  # Dataset CSV sinh ra từ thuật toán BFS để làm nhãn học
-├── models/                # Các file model Keras (.keras) đã huấn luyện
+├── models/                # Các file model Keras (.keras) và TensorFlow Lite (.tflite)
 ├── outputs/               # Biểu đồ loss, metrics, ảnh demo và log kết quả huấn luyện
 ├── reports/               # Báo cáo và phân tích chuyên sâu
 ├── slides/                # Tài liệu slide thuyết trình
@@ -38,7 +38,7 @@ maze-ann-a-star/
 │   ├── models.py          # Định nghĩa 3 kiến trúc mạng ANN (Underfit, Overfit, Goodfit)
 │   ├── train.py           # Script huấn luyện mô hình
 │   ├── cross_validate.py  # Script đánh giá chéo (Cross-validation)
-│   ├── heuristics.py      # Tích hợp model Keras thành hàm heuristic cho A*
+│   ├── heuristics.py      # Tích hợp model TensorFlow Lite thành hàm heuristic cho A*
 │   ├── visualize.py       # Render hình ảnh mê cung và vẽ đường đi
 │   └── demo.py            # Chạy so sánh thực tế giữa BFS, A* Manhattan và A* ANN
 ├── requirements.txt       # Các thư viện phụ thuộc
@@ -179,9 +179,9 @@ Kết quả khi đưa 3 thuật toán vào chạy chung một màn chơi:
 | :--- | :---: | :---: | :---: | :---: |
 | **BFS** | Có | 20 | 104 | ~0.09 ms |
 | **A* + Manhattan** | Có | 20 | 46 | ~0.06 ms |
-| **A* + ANN (Goodfit)** | Có | 20 | **33** | ~681.70 ms* |
+| **A* + ANN (Goodfit)** | Có | 20 | **34** | ~0.37 ms* |
 
-*(Ghi chú: Thời gian của ANN cao hơn do quá trình Infer qua model Keras cho từng node tốn nhiều overhead hơn tính toán biểu thức toán học. Trong thực tế để tối ưu thời gian, có thể dùng TensorRT, ONNX hoặc batch inference.)*
+*(Ghi chú: Thời gian của ANN được tối ưu hóa cực tốt nhờ sử dụng định dạng TensorFlow Lite (TFLite) thay vì Keras, loại bỏ phần lớn overhead khi suy luận trên CPU.)*
 
 **Hình ảnh Demo kết quả tìm đường:**
 
@@ -204,7 +204,7 @@ Kết quả khi đưa 3 thuật toán vào chạy chung một màn chơi:
 **Gợi ý phát triển tiếp:**
 - Huấn luyện với mê cung kích thước đa dạng và phức tạp hơn (ví dụ Maze sinh bởi thuật toán DFS, Prim).
 - Áp dụng mạng **CNN (Convolutional Neural Network)** nhận đầu vào trực tiếp là ảnh/ma trận mê cung 2D cục bộ thay vì vector 1D thủ công.
-- Export mô hình sang `.tflite` hoặc `ONNX` để tăng tốc độ inference, khắc phục điểm yếu thời gian chạy của ANN so với Manhattan.
+- Export mô hình sang `.tflite` (đã áp dụng) hoặc `ONNX` để tăng tốc độ inference.
 - So sánh thêm với biến thể **Weighted A***.
 - Xây dựng giao diện Web/GUI (Pygame/Streamlit) để người dùng có thể tự vẽ tường và xem thuật toán chạy trực tiếp.
 

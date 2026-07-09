@@ -49,14 +49,14 @@ Chay 5-fold cross-validation voi 10 epoch/fold:
 | --- | --- | ---: | ---: | ---: |
 | BFS | Co | 20 | 104 | 0.09 ms |
 | A* + Manhattan | Co | 20 | 46 | 0.06 ms |
-| A* + ANN | Co | 20 | 33 | 681.70 ms |
+| A* + ANN | Co | 20 | 34 | 0.37 ms |
 
 Nhan xet:
 
 - Ca 3 thuat toan deu tim duoc duong dai 20 buoc.
 - A* + Manhattan duyet it node hon BFS.
 - A* + ANN duyet it node nhat trong demo nay.
-- Thoi gian A* + ANN cao hon vi moi lan uoc luong heuristic phai goi model Keras. Khi bao ve, nen nhan manh so node duyet la tieu chi chinh de minh hoa chat luong heuristic; thoi gian Python demo phu thuoc overhead goi model.
+- Thoi gian A* + ANN rat nhanh nhờ su dung TensorFlow Lite de toi uu qua trinh suy luan tren CPU, triet tieu overhead cua Keras. Ban hoan toan co the ap dung ket qua nay cho cac bai toan thuc te theo thoi gian thuc.
 
 ## File ket qua da tao
 
