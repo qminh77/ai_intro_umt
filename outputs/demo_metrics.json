@@ -13,21 +13,21 @@
       "found": true,
       "path_length": 20,
       "explored_nodes": 104,
-      "elapsed_ms": 0.09395903907716274
+      "elapsed_ms": 0.08454197086393833
     },
     {
       "algorithm": "A* + Manhattan",
       "found": true,
       "path_length": 20,
       "explored_nodes": 46,
-      "elapsed_ms": 0.0653750030323863
+      "elapsed_ms": 0.05937507376074791
     },
     {
       "algorithm": "A* + ANN",
       "found": true,
       "path_length": 20,
       "explored_nodes": 33,
-      "elapsed_ms": 0.47675007954239845
+      "elapsed_ms": 0.4555841442197561
     }
   ]
 }
