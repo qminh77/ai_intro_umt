@@ -1,4 +1,8 @@
-"""Huan luyen ANN: underfit, overfit, goodfit va cross-validation."""
+"""Huấn luyện ANN: underfit, overfit, goodfit và cross-validation.
+
+Đây là file quan trọng nhất cho phần thực nghiệm. Nếu muốn tự thay số layer,
+số node hoặc số epoch để tạo underfitting/overfitting, chỉnh trong file này.
+"""
 
 from __future__ import annotations
 
@@ -16,6 +20,8 @@ from .dataset import split_features_target
 
 @dataclass(frozen=True)
 class ExperimentConfig:
+    """Cấu hình huấn luyện cho một thí nghiệm."""
+
     epochs: int
     batch_size: int
     train_limit: int | None
@@ -23,51 +29,62 @@ class ExperimentConfig:
     description: str
 
 
+# Chỉnh số epoch ở đây nếu muốn thay đổi thời gian học mặc định.
+# train_limit dùng để cố tình giảm dữ liệu train, giúp tạo overfitting dễ hơn.
 EXPERIMENTS: dict[str, ExperimentConfig] = {
     "underfit": ExperimentConfig(
-        epochs=5,
+        epochs=5,  # Ít epoch để mô hình chưa học đủ.
         batch_size=64,
         train_limit=None,
         early_stopping=False,
-        description="Mang qua nho va train it epoch -> underfitting.",
+        description="Mạng quá nhỏ và train ít epoch -> underfitting.",
     ),
     "overfit": ExperimentConfig(
-        epochs=150,
+        epochs=150,  # Nhiều epoch để mô hình có cơ hội học vẹt.
         batch_size=32,
-        train_limit=3000,
+        train_limit=3000,  # Giới hạn dữ liệu train để overfit xuất hiện rõ hơn.
         early_stopping=False,
-        description="Mang qua lon, du lieu train it, train lau -> overfitting.",
+        description="Mạng quá lớn, dữ liệu train ít, train lâu -> overfitting.",
     ),
     "goodfit": ExperimentConfig(
-        epochs=100,
+        epochs=100,  # Đây là số epoch tối đa; EarlyStopping có thể dừng sớm hơn.
         batch_size=64,
         train_limit=None,
         early_stopping=True,
-        description="Mang vua phai, co Dropout va EarlyStopping -> fit tot hon.",
+        description="Mạng vừa phải, có Dropout và EarlyStopping -> fit tốt hơn.",
     ),
 }
 
 
 def import_tensorflow():
+    # Import TensorFlow ở trong hàm để các lệnh không cần train vẫn load nhanh hơn.
     try:
         import tensorflow as tf
     except ImportError as exc:
         raise RuntimeError(
-            "Can cai TensorFlow: python -m pip install -r requirements.txt"
+            "Cần cài TensorFlow: python -m pip install -r requirements.txt"
         ) from exc
     return tf
 
 
 def build_model(experiment: str, input_dim: int):
+    """Tạo kiến trúc ANN theo tên thí nghiệm.
+
+    Đây là nơi chỉnh số layer và số node. Mỗi dòng `Dense(...)` là một layer
+    fully-connected. Số trong `Dense(64)` chính là số node/neuron của layer đó.
+    """
+
     tf = import_tensorflow()
 
     if experiment == "underfit":
+        # UNDERFIT: mạng cố tình rất nhỏ nên khó học hết quy luật của dữ liệu.
         layers = [
             tf.keras.layers.Input(shape=(input_dim,)),
-            tf.keras.layers.Dense(4, activation="relu"),
-            tf.keras.layers.Dense(1),
+            tf.keras.layers.Dense(4, activation="relu"),  # Chỉnh 4 -> 2 để underfit nặng hơn.
+            tf.keras.layers.Dense(1),                     # Output: dự đoán true_distance.
         ]
     elif experiment == "overfit":
+        # OVERFIT: mạng rất lớn, nhiều tham số, dễ học vẹt khi train trên ít dữ liệu.
         layers = [
             tf.keras.layers.Input(shape=(input_dim,)),
             tf.keras.layers.Dense(512, activation="relu"),
@@ -77,6 +94,8 @@ def build_model(experiment: str, input_dim: int):
             tf.keras.layers.Dense(1),
         ]
     elif experiment == "goodfit":
+        # GOODFIT: mạng vừa phải. Dropout tắt ngẫu nhiên một phần node khi train
+        # để giảm học vẹt, EarlyStopping được bật ở phần callback bên dưới.
         layers = [
             tf.keras.layers.Input(shape=(input_dim,)),
             tf.keras.layers.Dense(64, activation="relu"),
@@ -86,9 +105,12 @@ def build_model(experiment: str, input_dim: int):
             tf.keras.layers.Dense(1),
         ]
     else:
-        raise ValueError(f"Khong co thi nghiem: {experiment}")
+        raise ValueError(f"Không có thí nghiệm: {experiment}")
 
     model = tf.keras.Sequential(layers, name=f"ann_{experiment}_heuristic")
+
+    # Vì output là khoảng cách dạng số, đây là bài toán hồi quy, không phải phân loại.
+    # Do đó loss dùng MSE và metric dễ hiểu hơn là MAE: sai trung bình bao nhiêu bước.
     model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
         loss="mse",
@@ -98,6 +120,7 @@ def build_model(experiment: str, input_dim: int):
 
 
 def training_callbacks(experiment: str):
+    # Chỉ goodfit dùng EarlyStopping. Underfit/overfit cố tình không dùng để dễ minh họa hiện tượng.
     if not EXPERIMENTS[experiment].early_stopping:
         return []
     tf = import_tensorflow()
@@ -116,6 +139,8 @@ def split_dataframe(
     train_ratio: float = 0.70,
     val_ratio: float = 0.15,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    # Chia dữ liệu theo tỉ lệ 70/15/15: train/validation/test.
+    # Validation dùng trong lúc train, test chỉ dùng để đánh giá cuối cùng.
     shuffled = df.sample(frac=1.0, random_state=seed).reset_index(drop=True)
     train_end = int(len(shuffled) * train_ratio)
     val_end = train_end + int(len(shuffled) * val_ratio)
@@ -135,9 +160,12 @@ def run_experiment(
     tf.keras.utils.set_random_seed(seed)
 
     train_df, val_df, test_df = split_dataframe(df, seed=seed)
+
+    # Với overfit, ta cố tình train trên ít dòng hơn để mô hình dễ học thuộc tập train.
     if config.train_limit is not None and len(train_df) > config.train_limit:
         train_df = train_df.sample(n=config.train_limit, random_state=seed)
 
+    # Tách dữ liệu thành input X và nhãn y cho Keras.
     x_train, y_train = split_features_target(train_df)
     x_val, y_val = split_features_target(val_df)
     x_test, y_test = split_features_target(test_df)
@@ -148,6 +176,8 @@ def run_experiment(
     print(f"\n=== {experiment} ===")
     print(config.description)
     model.summary()
+
+    # model.fit là vòng lặp học chính: forward -> tính loss -> backpropagation -> cập nhật trọng số.
     history = model.fit(
         x_train,
         y_train,
@@ -158,6 +188,7 @@ def run_experiment(
         verbose=2,
     )
 
+    # Test set chỉ dùng sau khi train xong để đánh giá khách quan.
     evaluation = model.evaluate(x_test, y_test, verbose=0, return_dict=True)
     predictions = model.predict(x_test, verbose=0).reshape(-1)
     test_mae = mean_absolute_error(y_test, predictions)
@@ -168,6 +199,7 @@ def run_experiment(
     plot_path = outputs_dir / f"{experiment}_loss.png"
     metrics_path = outputs_dir / f"{experiment}_metrics.json"
 
+    # Lưu lại model, lịch sử học và biểu đồ để đưa vào báo cáo/slide.
     model.save(model_path)
     history_to_dataframe(history).to_csv(history_path, index=False)
     plot_training_history(history, plot_path, title=f"{experiment.title()} loss")
@@ -187,8 +219,8 @@ def run_experiment(
         "plot_path": str(plot_path),
     }
     metrics_path.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
-    print(f"Da luu model: {model_path}")
-    print(f"Test MAE: {test_mae:.3f} buoc")
+    print(f"Đã lưu model: {model_path}")
+    print(f"Test MAE: {test_mae:.3f} bước")
     return metrics
 
 
@@ -201,15 +233,18 @@ def run_cross_validation(
     output_path: Path,
 ) -> dict[str, object]:
     if folds < 2:
-        raise ValueError("folds phai >= 2")
+        raise ValueError("folds phải >= 2")
 
     tf = import_tensorflow()
+
+    # Cross-validation: chia dataset thành K phần, lần lượt lấy 1 phần làm validation.
     shuffled = df.sample(frac=1.0, random_state=seed).reset_index(drop=True)
     fold_indices = np.array_split(np.arange(len(shuffled)), folds)
     fold_frames = [shuffled.iloc[index].reset_index(drop=True) for index in fold_indices]
 
     results = []
     for fold_index in range(folds):
+        # Fold hiện tại là validation, các fold còn lại ghép thành train.
         validation_df = fold_frames[fold_index]
         train_df = pd.concat(
             [fold for index, fold in enumerate(fold_frames) if index != fold_index],
@@ -219,6 +254,8 @@ def run_cross_validation(
         x_val, y_val = split_features_target(validation_df)
 
         tf.keras.utils.set_random_seed(seed + fold_index)
+
+        # Cross-validation chỉ kiểm tra độ ổn định của model goodfit.
         model = build_model("goodfit", input_dim=x_train.shape[1])
         model.fit(
             x_train,
@@ -252,11 +289,12 @@ def run_cross_validation(
     }
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
-    print(f"Da luu cross-validation: {output_path}")
+    print(f"Đã lưu cross-validation: {output_path}")
     return summary
 
 
 def history_to_dataframe(history) -> pd.DataFrame:
+    # Keras trả về history dạng dict. Chuyển sang CSV để dễ mở bằng Excel/Sheets.
     return pd.DataFrame(
         {
             "epoch": np.arange(1, len(history.history["loss"]) + 1),
@@ -268,6 +306,7 @@ def history_to_dataframe(history) -> pd.DataFrame:
 def plot_training_history(history, output_path: Path, title: str) -> None:
     import matplotlib.pyplot as plt
 
+    # Biểu đồ quan trọng nhất để nhìn underfit/overfit là train loss và validation loss.
     epochs = np.arange(1, len(history.history["loss"]) + 1)
     fig, axes = plt.subplots(1, 2, figsize=(12, 4))
 
@@ -283,7 +322,7 @@ def plot_training_history(history, output_path: Path, title: str) -> None:
     axes[1].plot(epochs, history.history["val_mae"], label="Validation MAE")
     axes[1].set_title("MAE")
     axes[1].set_xlabel("Epoch")
-    axes[1].set_ylabel("Sai so trung binh (buoc)")
+    axes[1].set_ylabel("Sai số trung bình (bước)")
     axes[1].legend()
     axes[1].grid(alpha=0.3)
 
@@ -294,32 +333,34 @@ def plot_training_history(history, output_path: Path, title: str) -> None:
 
 
 def mean_absolute_error(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    # MAE: sai số tuyệt đối trung bình, đơn vị là số bước trong mê cung.
     return float(np.mean(np.abs(y_true - y_pred)))
 
 
 def mean_squared_error(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    # MSE phạt lỗi lớn mạnh hơn MAE vì có bình phương sai số.
     return float(np.mean(np.square(y_true - y_pred)))
 
 
 def load_dataset(path: Path) -> pd.DataFrame:
     if not path.exists():
-        raise FileNotFoundError(f"Khong tim thay dataset: {path}. Hay chay: python -m src.dataset")
+        raise FileNotFoundError(f"Không tìm thấy dataset: {path}. Hãy chạy: python -m src.dataset")
     df = pd.read_csv(path)
     missing = set(FEATURE_COLUMNS + [TARGET_COLUMN]) - set(df.columns)
     if missing:
-        raise ValueError(f"Dataset thieu cot: {sorted(missing)}")
+        raise ValueError(f"Dataset thiếu cột: {sorted(missing)}")
     return df
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Train ANN heuristic va chay cross-validation.")
+    parser = argparse.ArgumentParser(description="Train ANN heuristic và chạy cross-validation.")
     parser.add_argument("--dataset", type=Path, default=DATA_DIR / "maze_dataset.csv")
     parser.add_argument("--experiment", choices=["underfit", "overfit", "goodfit", "all"], default="all")
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--epochs", type=int, default=None, help="Ghi de so epoch khi can test nhanh.")
+    parser.add_argument("--epochs", type=int, default=None, help="Ghi đè số epoch khi cần test nhanh.")
     parser.add_argument("--models-dir", type=Path, default=MODELS_DIR)
     parser.add_argument("--outputs-dir", type=Path, default=OUTPUTS_DIR)
-    parser.add_argument("--cross-val", action="store_true", help="Chay K-fold cross-validation cho goodfit.")
+    parser.add_argument("--cross-val", action="store_true", help="Chạy K-fold cross-validation cho goodfit.")
     parser.add_argument("--folds", type=int, default=5)
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--cv-output", type=Path, default=OUTPUTS_DIR / "cross_validation.json")
@@ -330,6 +371,7 @@ def main() -> None:
     args = parse_args()
     df = load_dataset(args.dataset)
 
+    # Nếu có --cross-val thì chỉ chạy cross-validation, không train/lưu 3 model chính.
     if args.cross_val:
         run_cross_validation(
             df=df,
@@ -343,6 +385,8 @@ def main() -> None:
 
     args.models_dir.mkdir(parents=True, exist_ok=True)
     args.outputs_dir.mkdir(parents=True, exist_ok=True)
+
+    # --experiment all sẽ chạy cả underfit, overfit và goodfit.
     experiments = list(EXPERIMENTS) if args.experiment == "all" else [args.experiment]
     metrics = {
         experiment: run_experiment(
@@ -358,7 +402,7 @@ def main() -> None:
 
     summary_path = args.outputs_dir / "training_summary.json"
     summary_path.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
-    print(f"Da luu tom tat train: {summary_path}")
+    print(f"Đã lưu tóm tắt train: {summary_path}")
 
 
 if __name__ == "__main__":

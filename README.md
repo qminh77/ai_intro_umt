@@ -25,6 +25,24 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
+Neu terminal khong nhan lenh `python`, dung truc tiep interpreter trong moi truong ao:
+
+```bash
+./.venv/bin/python -m src.dataset --help
+```
+
+## Lam Sach Ket Qua Cu
+
+Da co the xoa sach dataset/model/output va chay lai tu dau. Lenh tuong duong:
+
+```bash
+rm -f data/*.csv
+rm -f models/*.keras models/*.h5 models/*.tflite
+rm -f outputs/*.csv outputs/*.json outputs/*.png outputs/*.txt
+```
+
+Sau khi clean, cac file sinh lai se nam trong `data/`, `models/`, `outputs/` nhung khong bi git track.
+
 ## Cach Chay
 
 Sinh dataset me cung, trong do nhan `true_distance` duoc tinh bang BFS tu goal:
@@ -33,10 +51,64 @@ Sinh dataset me cung, trong do nhan `true_distance` duoc tinh bang BFS tu goal:
 python -m src.dataset --mazes 500 --max-samples-per-maze 200
 ```
 
+Lenh dataset day du tham so:
+
+```bash
+python -m src.dataset \
+  --mazes 500 \
+  --height 20 \
+  --width 20 \
+  --wall-prob 0.25 \
+  --min-goal-distance 20 \
+  --max-samples-per-maze 200 \
+  --seed 42 \
+  --output data/maze_dataset.csv
+```
+
+Lenh test nhanh dataset nho:
+
+```bash
+python -m src.dataset \
+  --mazes 20 \
+  --height 10 \
+  --width 10 \
+  --wall-prob 0.2 \
+  --min-goal-distance 6 \
+  --max-samples-per-maze 50 \
+  --output data/maze_dataset.csv
+```
+
 Train 3 mo hinh de minh hoa underfitting, overfitting va good fit:
 
 ```bash
 python -m src.train --experiment all
+```
+
+Train tung mo hinh rieng:
+
+```bash
+python -m src.train --experiment underfit
+python -m src.train --experiment overfit
+python -m src.train --experiment goodfit
+```
+
+Ghi de so epoch tu dong lenh, huu ich khi test nhanh:
+
+```bash
+python -m src.train --experiment underfit --epochs 2
+python -m src.train --experiment overfit --epochs 50
+python -m src.train --experiment goodfit --epochs 20
+```
+
+Lenh train day du tham so:
+
+```bash
+python -m src.train \
+  --dataset data/maze_dataset.csv \
+  --experiment all \
+  --seed 42 \
+  --models-dir models \
+  --outputs-dir outputs
 ```
 
 Chay cross-validation cho mo hinh goodfit:
@@ -45,16 +117,77 @@ Chay cross-validation cho mo hinh goodfit:
 python -m src.train --cross-val --folds 5 --epochs 10
 ```
 
+Lenh cross-validation day du tham so:
+
+```bash
+python -m src.train \
+  --dataset data/maze_dataset.csv \
+  --cross-val \
+  --folds 5 \
+  --epochs 10 \
+  --batch-size 64 \
+  --cv-output outputs/cross_validation.json
+```
+
 Chay demo so sanh BFS, A* Manhattan va A* ANN:
 
 ```bash
 python -m src.demo
 ```
 
+Lenh demo day du tham so:
+
+```bash
+python -m src.demo \
+  --height 20 \
+  --width 20 \
+  --wall-prob 0.25 \
+  --min-goal-distance 20 \
+  --seed 123 \
+  --model models/ann_heuristic_goodfit.keras \
+  --output outputs/demo_path.png \
+  --metrics outputs/demo_metrics.json
+```
+
 Chay UI Pygame tuy chon:
 
 ```bash
 python -m src.ui
+```
+
+Lenh UI day du tham so:
+
+```bash
+python -m src.ui \
+  --height 20 \
+  --width 20 \
+  --wall-prob 0.25 \
+  --min-goal-distance 20 \
+  --model models/ann_heuristic_goodfit.keras
+```
+
+## Quy Trinh Chay Lai Tu Dau
+
+Chay day du de tao ket qua nop bai:
+
+```bash
+source .venv/bin/activate
+rm -f data/*.csv
+rm -f models/*.keras models/*.h5 models/*.tflite
+rm -f outputs/*.csv outputs/*.json outputs/*.png outputs/*.txt
+python -m src.dataset --mazes 500 --max-samples-per-maze 200
+python -m src.train --experiment all
+python -m src.train --cross-val --folds 5 --epochs 10
+python -m src.demo
+```
+
+Chay nhanh de kiem tra code truoc:
+
+```bash
+source .venv/bin/activate
+python -m src.dataset --mazes 20 --height 10 --width 10 --min-goal-distance 6 --max-samples-per-maze 50
+python -m src.train --experiment underfit --epochs 1
+python -m src.demo --height 10 --width 10 --min-goal-distance 6
 ```
 
 ## Thiet Ke ANN
