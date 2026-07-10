@@ -1,85 +1,125 @@
-"""Script huấn luyện và đánh giá các mô hình Heuristic ANN trên tập dữ liệu mê cung.
-
-File này chịu trách nhiệm load dữ liệu CSV, chia dữ liệu thành các tập Train/Val/Test, 
-xây dựng mô hình Keras tương ứng với cấu hình thí nghiệm, tiến hành train mô hình, 
-chuyển đổi và lưu trữ mô hình dưới dạng .keras và .tflite, đồng thời vẽ biểu đồ lịch sử huấn luyện.
-"""
+"""Huan luyen ANN: underfit, overfit, goodfit va cross-validation."""
 
 from __future__ import annotations
 
 import argparse
 import json
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 from .config import DATA_DIR, FEATURE_COLUMNS, MODELS_DIR, OUTPUTS_DIR, TARGET_COLUMN
-from .features import split_features_target
-from .models import EXPERIMENTS, build_model, import_tensorflow, training_callbacks
+from .dataset import split_features_target
 
 
-def parse_args() -> argparse.Namespace:
-    """Phân tích các đối số dòng lệnh đầu vào khi thực thi script huấn luyện.
-    
-    Returns:
-        argparse.Namespace chứa giá trị các tham số đã phân tích cú pháp.
-    """
-    parser = argparse.ArgumentParser(description="Huấn luyện các mô hình heuristic ANN theo kịch bản thí nghiệm.")
-    parser.add_argument(
-        "--dataset",
-        type=Path,
-        default=DATA_DIR / "maze_dataset.csv",
-        help="Đường dẫn đến file CSV chứa tập dữ liệu mê cung đã sinh.",
+@dataclass(frozen=True)
+class ExperimentConfig:
+    epochs: int
+    batch_size: int
+    train_limit: int | None
+    early_stopping: bool
+    description: str
+
+
+EXPERIMENTS: dict[str, ExperimentConfig] = {
+    "underfit": ExperimentConfig(
+        epochs=5,
+        batch_size=64,
+        train_limit=None,
+        early_stopping=False,
+        description="Mang qua nho va train it epoch -> underfitting.",
+    ),
+    "overfit": ExperimentConfig(
+        epochs=150,
+        batch_size=32,
+        train_limit=3000,
+        early_stopping=False,
+        description="Mang qua lon, du lieu train it, train lau -> overfitting.",
+    ),
+    "goodfit": ExperimentConfig(
+        epochs=100,
+        batch_size=64,
+        train_limit=None,
+        early_stopping=True,
+        description="Mang vua phai, co Dropout va EarlyStopping -> fit tot hon.",
+    ),
+}
+
+
+def import_tensorflow():
+    try:
+        import tensorflow as tf
+    except ImportError as exc:
+        raise RuntimeError(
+            "Can cai TensorFlow: python -m pip install -r requirements.txt"
+        ) from exc
+    return tf
+
+
+def build_model(experiment: str, input_dim: int):
+    tf = import_tensorflow()
+
+    if experiment == "underfit":
+        layers = [
+            tf.keras.layers.Input(shape=(input_dim,)),
+            tf.keras.layers.Dense(4, activation="relu"),
+            tf.keras.layers.Dense(1),
+        ]
+    elif experiment == "overfit":
+        layers = [
+            tf.keras.layers.Input(shape=(input_dim,)),
+            tf.keras.layers.Dense(512, activation="relu"),
+            tf.keras.layers.Dense(512, activation="relu"),
+            tf.keras.layers.Dense(256, activation="relu"),
+            tf.keras.layers.Dense(128, activation="relu"),
+            tf.keras.layers.Dense(1),
+        ]
+    elif experiment == "goodfit":
+        layers = [
+            tf.keras.layers.Input(shape=(input_dim,)),
+            tf.keras.layers.Dense(64, activation="relu"),
+            tf.keras.layers.Dropout(0.2),
+            tf.keras.layers.Dense(32, activation="relu"),
+            tf.keras.layers.Dense(16, activation="relu"),
+            tf.keras.layers.Dense(1),
+        ]
+    else:
+        raise ValueError(f"Khong co thi nghiem: {experiment}")
+
+    model = tf.keras.Sequential(layers, name=f"ann_{experiment}_heuristic")
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+        loss="mse",
+        metrics=[tf.keras.metrics.MeanAbsoluteError(name="mae")],
     )
-    parser.add_argument(
-        "--experiment",
-        choices=["underfit", "overfit", "goodfit", "all"],
-        default="all",
-        help="Chọn thí nghiệm huấn luyện cụ thể, hoặc 'all' để huấn luyện cả 3.",
-    )
-    parser.add_argument("--seed", type=int, default=42, help="Hạt giống số ngẫu nhiên.")
-    parser.add_argument("--models-dir", type=Path, default=MODELS_DIR, help="Thư mục lưu trữ file mô hình đầu ra.")
-    parser.add_argument("--outputs-dir", type=Path, default=OUTPUTS_DIR, help="Thư mục lưu trữ biểu đồ và tóm tắt kết quả.")
-    return parser.parse_args()
+    return model
 
 
-def main() -> None:
-    """Hàm điều phối chính cho quá trình chạy toàn bộ pipeline huấn luyện mô hình."""
-    args = parse_args()
-    args.models_dir.mkdir(parents=True, exist_ok=True)
-    args.outputs_dir.mkdir(parents=True, exist_ok=True)
-
-    # Đảm bảo tập dữ liệu CSV đầu vào đã được sinh trước đó
-    if not args.dataset.exists():
-        raise FileNotFoundError(
-            f"Không tìm thấy tập dữ liệu: {args.dataset}. Hãy chạy script sinh dữ liệu trước: `python -m src.generate_dataset`."
+def training_callbacks(experiment: str):
+    if not EXPERIMENTS[experiment].early_stopping:
+        return []
+    tf = import_tensorflow()
+    return [
+        tf.keras.callbacks.EarlyStopping(
+            monitor="val_loss",
+            patience=10,
+            restore_best_weights=True,
         )
+    ]
 
-    # Đọc dữ liệu và xác thực cấu trúc các cột đặc trưng/nhãn
-    df = pd.read_csv(args.dataset)
-    missing_columns = set(FEATURE_COLUMNS + [TARGET_COLUMN]) - set(df.columns)
-    if missing_columns:
-        raise ValueError(f"Tập dữ liệu bị thiếu các cột bắt buộc: {sorted(missing_columns)}")
 
-    # Lập danh sách các thí nghiệm cần chạy dựa trên lựa chọn đầu vào
-    experiments = list(EXPERIMENTS) if args.experiment == "all" else [args.experiment]
-    metrics = {}
-
-    for experiment in experiments:
-        print(f"\n=== Bắt đầu huấn luyện thí nghiệm: {experiment} ===")
-        metrics[experiment] = run_experiment(
-            experiment=experiment,
-            df=df,
-            seed=args.seed,
-            models_dir=args.models_dir,
-            outputs_dir=args.outputs_dir,
-        )
-
-    # Lưu tóm tắt kết quả kiểm định của tất cả thí nghiệm ra file JSON
-    summary_path = args.outputs_dir / "training_summary.json"
-    summary_path.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
-    print(f"\nĐã lưu tóm tắt kết quả huấn luyện tại: {summary_path}")
+def split_dataframe(
+    df: pd.DataFrame,
+    seed: int,
+    train_ratio: float = 0.70,
+    val_ratio: float = 0.15,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    shuffled = df.sample(frac=1.0, random_state=seed).reset_index(drop=True)
+    train_end = int(len(shuffled) * train_ratio)
+    val_end = train_end + int(len(shuffled) * val_ratio)
+    return shuffled.iloc[:train_end], shuffled.iloc[train_end:val_end], shuffled.iloc[val_end:]
 
 
 def run_experiment(
@@ -88,81 +128,50 @@ def run_experiment(
     seed: int,
     models_dir: Path,
     outputs_dir: Path,
+    epochs_override: int | None = None,
 ) -> dict[str, float | int | str]:
-    """Thực thi toàn bộ luồng huấn luyện cho một thí nghiệm cụ thể.
-    
-    Các bước bao gồm: Chia dữ liệu -> Giới hạn dữ liệu nếu cấu hình yêu cầu -> Tách đặc trưng & Nhãn ->
-    Xây dựng mô hình -> Huấn luyện với Callbacks -> Đánh giá trên tập kiểm thử Test -> 
-    Lưu mô hình Keras & TFLite -> Lưu lịch sử & Biểu đồ.
-    
-    Args:
-        experiment: Tên thí nghiệm cần chạy.
-        df: DataFrame chứa toàn bộ dữ liệu.
-        seed: Hạt giống số ngẫu nhiên.
-        models_dir: Thư mục lưu mô hình.
-        outputs_dir: Thư mục lưu biểu đồ/kết quả.
-        
-    Returns:
-        Dictionary chứa các chỉ số đánh giá hiệu năng mô hình trên tập Test và đường dẫn các file kết quả.
-    """
     config = EXPERIMENTS[experiment]
     tf = import_tensorflow()
     tf.keras.utils.set_random_seed(seed)
-    
-    # Chia dữ liệu theo tỷ lệ chuẩn 70% Train, 15% Validation, 15% Test
-    train_df, val_df, test_df = split_dataframe(df, seed=seed)
 
-    # Nếu cấu hình thí nghiệm yêu cầu giới hạn số mẫu train (ví dụ kịch bản Overfit)
+    train_df, val_df, test_df = split_dataframe(df, seed=seed)
     if config.train_limit is not None and len(train_df) > config.train_limit:
         train_df = train_df.sample(n=config.train_limit, random_state=seed)
 
-    # Tách ma trận đặc trưng X và nhãn Y cho từng tập
     x_train, y_train = split_features_target(train_df)
     x_val, y_val = split_features_target(val_df)
     x_test, y_test = split_features_target(test_df)
 
-    # Khởi tạo mô hình Keras Sequential
     model = build_model(experiment, input_dim=x_train.shape[1])
+    epochs = epochs_override or config.epochs
+
+    print(f"\n=== {experiment} ===")
     print(config.description)
     model.summary()
-
-    # Huấn luyện mô hình
     history = model.fit(
         x_train,
         y_train,
         validation_data=(x_val, y_val),
-        epochs=config.epochs,
+        epochs=epochs,
         batch_size=config.batch_size,
         callbacks=training_callbacks(experiment),
         verbose=2,
     )
 
-    # Đánh giá hiệu năng mô hình trên tập test độc lập
     evaluation = model.evaluate(x_test, y_test, verbose=0, return_dict=True)
     predictions = model.predict(x_test, verbose=0).reshape(-1)
     test_mae = mean_absolute_error(y_test, predictions)
     test_mse = mean_squared_error(y_test, predictions)
 
-    # Xác định đường dẫn lưu trữ các file đầu ra của thí nghiệm
     model_path = models_dir / f"ann_heuristic_{experiment}.keras"
-    tflite_path = models_dir / f"ann_heuristic_{experiment}.tflite"
     history_path = outputs_dir / f"{experiment}_history.csv"
     plot_path = outputs_dir / f"{experiment}_loss.png"
     metrics_path = outputs_dir / f"{experiment}_metrics.json"
 
-    # 1. Lưu mô hình định dạng Keras nguyên bản
     model.save(model_path)
-
-    # 2. Chuyển đổi sang định dạng TensorFlow Lite (TFLite) để suy luận nhanh
-    converter = tf.lite.TFLiteConverter.from_keras_model(model)
-    tflite_model = converter.convert()
-    tflite_path.write_bytes(tflite_model)
-
-    # 3. Lưu lịch sử huấn luyện thành file CSV và vẽ biểu đồ loss/metrics
     history_to_dataframe(history).to_csv(history_path, index=False)
-    plot_training_history(history, plot_path, title=f"Thí nghiệm {experiment.title()}: Hàm mất mát (Loss)")
+    plot_training_history(history, plot_path, title=f"{experiment.title()} loss")
 
-    # Thu thập toàn bộ chỉ số để đóng gói trả về và lưu ra JSON
     metrics = {
         "experiment": experiment,
         "train_rows": int(len(train_df)),
@@ -174,88 +183,94 @@ def run_experiment(
         "test_mae": float(test_mae),
         "test_mse": float(test_mse),
         "model_path": str(model_path),
-        "tflite_path": str(tflite_path),
         "history_path": str(history_path),
         "plot_path": str(plot_path),
     }
     metrics_path.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
-
-    print(f"Đã lưu mô hình Keras: {model_path}")
-    print(f"Đã lưu mô hình TFLite: {tflite_path}")
-    print(f"Đã lưu biểu đồ: {plot_path}")
-    print(f"Kết quả Test MAE: {test_mae:.3f} steps")
+    print(f"Da luu model: {model_path}")
+    print(f"Test MAE: {test_mae:.3f} buoc")
     return metrics
 
 
-def split_dataframe(
+def run_cross_validation(
     df: pd.DataFrame,
+    folds: int,
+    epochs: int,
+    batch_size: int,
     seed: int,
-    train_ratio: float = 0.70,
-    val_ratio: float = 0.15,
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Phân tách ngẫu nhiên một DataFrame thành 3 tập dữ liệu: Train, Validation và Test.
-    
-    Tỷ lệ phân chia mặc định: 70% Train, 15% Validation, 15% Test.
-    
-    Args:
-        df: Pandas DataFrame gốc.
-        seed: Hạt giống số ngẫu nhiên dùng để trộn.
-        train_ratio: Tỷ lệ tập Train.
-        val_ratio: Tỷ lệ tập Validation.
-        
-    Returns:
-        Tuple (train_df, val_df, test_df) chứa 3 phân mục dữ liệu.
-    """
+    output_path: Path,
+) -> dict[str, object]:
+    if folds < 2:
+        raise ValueError("folds phai >= 2")
+
+    tf = import_tensorflow()
     shuffled = df.sample(frac=1.0, random_state=seed).reset_index(drop=True)
-    train_end = int(len(shuffled) * train_ratio)
-    val_end = train_end + int(len(shuffled) * val_ratio)
-    return shuffled.iloc[:train_end], shuffled.iloc[train_end:val_end], shuffled.iloc[val_end:]
+    fold_indices = np.array_split(np.arange(len(shuffled)), folds)
+    fold_frames = [shuffled.iloc[index].reset_index(drop=True) for index in fold_indices]
+
+    results = []
+    for fold_index in range(folds):
+        validation_df = fold_frames[fold_index]
+        train_df = pd.concat(
+            [fold for index, fold in enumerate(fold_frames) if index != fold_index],
+            ignore_index=True,
+        )
+        x_train, y_train = split_features_target(train_df)
+        x_val, y_val = split_features_target(validation_df)
+
+        tf.keras.utils.set_random_seed(seed + fold_index)
+        model = build_model("goodfit", input_dim=x_train.shape[1])
+        model.fit(
+            x_train,
+            y_train,
+            validation_data=(x_val, y_val),
+            epochs=epochs,
+            batch_size=batch_size,
+            callbacks=training_callbacks("goodfit"),
+            verbose=0,
+        )
+
+        predictions = model.predict(x_val, verbose=0).reshape(-1)
+        fold_result = {
+            "fold": fold_index + 1,
+            "validation_rows": int(len(validation_df)),
+            "mae": mean_absolute_error(y_val, predictions),
+            "mse": mean_squared_error(y_val, predictions),
+        }
+        results.append(fold_result)
+        print(
+            f"Fold {fold_index + 1}/{folds}: "
+            f"MAE={fold_result['mae']:.3f}, MSE={fold_result['mse']:.3f}"
+        )
+
+    summary = {
+        "folds": folds,
+        "epochs": epochs,
+        "mean_mae": float(np.mean([item["mae"] for item in results])),
+        "mean_mse": float(np.mean([item["mse"] for item in results])),
+        "results": results,
+    }
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    print(f"Da luu cross-validation: {output_path}")
+    return summary
 
 
 def history_to_dataframe(history) -> pd.DataFrame:
-    """Chuyển đổi đối tượng lịch sử huấn luyện của Keras thành một Pandas DataFrame.
-    
-    Args:
-        history: Đối tượng trả về từ hàm model.fit().
-        
-    Returns:
-        Pandas DataFrame chứa thông tin loss và metrics qua từng epoch.
-    """
-    rows = []
-    for epoch_index in range(len(history.history["loss"])):
-        row = {"epoch": epoch_index + 1}
-        for key, values in history.history.items():
-            row[key] = float(values[epoch_index])
-        rows.append(row)
-    return pd.DataFrame(rows)
+    return pd.DataFrame(
+        {
+            "epoch": np.arange(1, len(history.history["loss"]) + 1),
+            **{key: values for key, values in history.history.items()},
+        }
+    )
 
 
 def plot_training_history(history, output_path: Path, title: str) -> None:
-    """Vẽ và lưu trữ biểu đồ lịch sử quá trình huấn luyện mô hình.
-    
-    Vẽ song song 2 biểu đồ: MSE loss (hàm mất mát) và MAE metric (số bước sai số) 
-    cho cả tập huấn luyện (Train) và tập kiểm định (Validation) qua từng Epoch.
-    
-    Args:
-        history: Đối tượng lịch sử huấn luyện Keras.
-        output_path: Đường dẫn lưu ảnh biểu đồ PNG.
-        title: Tiêu đề chính hiển thị trên biểu đồ loss.
-        
-    Raises:
-        RuntimeError: Nếu chưa cài đặt thư viện matplotlib.
-    """
-    try:
-        import matplotlib.pyplot as plt
-    except ImportError as exc:
-        raise RuntimeError(
-            "Yêu cầu cài đặt matplotlib để vẽ biểu đồ lịch sử huấn luyện. Hãy cài đặt các thư viện cần thiết."
-        ) from exc
+    import matplotlib.pyplot as plt
 
     epochs = np.arange(1, len(history.history["loss"]) + 1)
-
     fig, axes = plt.subplots(1, 2, figsize=(12, 4))
-    
-    # Biểu đồ trái: MSE Loss
+
     axes[0].plot(epochs, history.history["loss"], label="Train loss")
     axes[0].plot(epochs, history.history["val_loss"], label="Validation loss")
     axes[0].set_title(title)
@@ -264,48 +279,86 @@ def plot_training_history(history, output_path: Path, title: str) -> None:
     axes[0].legend()
     axes[0].grid(alpha=0.3)
 
-    # Biểu đồ phải: MAE Metric
     axes[1].plot(epochs, history.history["mae"], label="Train MAE")
     axes[1].plot(epochs, history.history["val_mae"], label="Validation MAE")
-    axes[1].set_title("Chỉ số MAE")
+    axes[1].set_title("MAE")
     axes[1].set_xlabel("Epoch")
-    axes[1].set_ylabel("Sai số trung bình (số bước)")
+    axes[1].set_ylabel("Sai so trung binh (buoc)")
     axes[1].legend()
     axes[1].grid(alpha=0.3)
 
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.tight_layout()
     fig.savefig(output_path, dpi=160)
     plt.close(fig)
 
 
 def mean_absolute_error(y_true: np.ndarray, y_pred: np.ndarray) -> float:
-    """Tính toán sai số tuyệt đối trung bình (MAE) giữa nhãn thực tế và dự đoán.
-    
-    MAE = (1 / n) * sum(|y_true - y_pred|)
-    
-    Args:
-        y_true: Mảng NumPy chứa nhãn thực tế.
-        y_pred: Mảng NumPy chứa nhãn dự đoán.
-        
-    Returns:
-        Giá trị MAE (số thực).
-    """
     return float(np.mean(np.abs(y_true - y_pred)))
 
 
 def mean_squared_error(y_true: np.ndarray, y_pred: np.ndarray) -> float:
-    """Tính toán sai số bình phương trung bình (MSE) giữa nhãn thực tế và dự đoán.
-    
-    MSE = (1 / n) * sum((y_true - y_pred)^2)
-    
-    Args:
-        y_true: Mảng NumPy chứa nhãn thực tế.
-        y_pred: Mảng NumPy chứa nhãn dự đoán.
-        
-    Returns:
-        Giá trị MSE (số thực).
-    """
     return float(np.mean(np.square(y_true - y_pred)))
+
+
+def load_dataset(path: Path) -> pd.DataFrame:
+    if not path.exists():
+        raise FileNotFoundError(f"Khong tim thay dataset: {path}. Hay chay: python -m src.dataset")
+    df = pd.read_csv(path)
+    missing = set(FEATURE_COLUMNS + [TARGET_COLUMN]) - set(df.columns)
+    if missing:
+        raise ValueError(f"Dataset thieu cot: {sorted(missing)}")
+    return df
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Train ANN heuristic va chay cross-validation.")
+    parser.add_argument("--dataset", type=Path, default=DATA_DIR / "maze_dataset.csv")
+    parser.add_argument("--experiment", choices=["underfit", "overfit", "goodfit", "all"], default="all")
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--epochs", type=int, default=None, help="Ghi de so epoch khi can test nhanh.")
+    parser.add_argument("--models-dir", type=Path, default=MODELS_DIR)
+    parser.add_argument("--outputs-dir", type=Path, default=OUTPUTS_DIR)
+    parser.add_argument("--cross-val", action="store_true", help="Chay K-fold cross-validation cho goodfit.")
+    parser.add_argument("--folds", type=int, default=5)
+    parser.add_argument("--batch-size", type=int, default=64)
+    parser.add_argument("--cv-output", type=Path, default=OUTPUTS_DIR / "cross_validation.json")
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    df = load_dataset(args.dataset)
+
+    if args.cross_val:
+        run_cross_validation(
+            df=df,
+            folds=args.folds,
+            epochs=args.epochs or 10,
+            batch_size=args.batch_size,
+            seed=args.seed,
+            output_path=args.cv_output,
+        )
+        return
+
+    args.models_dir.mkdir(parents=True, exist_ok=True)
+    args.outputs_dir.mkdir(parents=True, exist_ok=True)
+    experiments = list(EXPERIMENTS) if args.experiment == "all" else [args.experiment]
+    metrics = {
+        experiment: run_experiment(
+            experiment=experiment,
+            df=df,
+            seed=args.seed,
+            models_dir=args.models_dir,
+            outputs_dir=args.outputs_dir,
+            epochs_override=args.epochs,
+        )
+        for experiment in experiments
+    }
+
+    summary_path = args.outputs_dir / "training_summary.json"
+    summary_path.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+    print(f"Da luu tom tat train: {summary_path}")
 
 
 if __name__ == "__main__":

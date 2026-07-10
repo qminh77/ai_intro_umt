@@ -1,18 +1,53 @@
-"""Logic xây dựng và tổng hợp tập dữ liệu từ các mê cung ngẫu nhiên được gán nhãn.
-
-File này chịu trách nhiệm điều phối việc sinh ra nhiều mê cung ngẫu nhiên thỏa mãn điều kiện 
-khoảng cách tối thiểu tới Goal, chạy giải thuật BFS từ Goal để đánh nhãn khoảng cách thực tế,
-và tổng hợp tất cả các dòng dữ liệu thành một Pandas DataFrame được trộn ngẫu nhiên.
-"""
+"""Sinh dataset huan luyen ANN cho heuristic me cung."""
 
 from __future__ import annotations
+
+import argparse
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from .features import build_dataset_rows
-from .maze import Position, free_cells, generate_maze, random_free_cell
-from .search import bfs_distances_to_goal
+from .config import DATA_DIR, FEATURE_COLUMNS, TARGET_COLUMN
+from .maze import (
+    Position,
+    bfs_distances_to_goal,
+    free_cells,
+    generate_maze,
+    is_wall_or_outside,
+    random_free_cell,
+)
+
+
+def state_to_features(maze: np.ndarray, current: Position, goal: Position) -> np.ndarray:
+    """Doi mot trang thai me cung thanh vector 10 dac trung cho ANN."""
+    row, col = current
+    goal_row, goal_col = goal
+    height, width = maze.shape
+    max_x = max(width - 1, 1)
+    max_y = max(height - 1, 1)
+
+    return np.array(
+        [
+            col / max_x,
+            row / max_y,
+            goal_col / max_x,
+            goal_row / max_y,
+            abs(col - goal_col) / max_x,
+            abs(row - goal_row) / max_y,
+            float(is_wall_or_outside(maze, (row - 1, col))),
+            float(is_wall_or_outside(maze, (row + 1, col))),
+            float(is_wall_or_outside(maze, (row, col - 1))),
+            float(is_wall_or_outside(maze, (row, col + 1))),
+        ],
+        dtype=np.float32,
+    )
+
+
+def split_features_target(df: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
+    x = df[FEATURE_COLUMNS].to_numpy(dtype=np.float32)
+    y = df[TARGET_COLUMN].to_numpy(dtype=np.float32)
+    return x, y
 
 
 def generate_labeled_dataset(
@@ -24,28 +59,10 @@ def generate_labeled_dataset(
     max_samples_per_maze: int | None,
     seed: int,
 ) -> pd.DataFrame:
-    """Sinh ra tập dữ liệu mê cung có gắn nhãn hoàn chỉnh.
-    
-    Sinh nhiều mê cung, chọn đích Goal hợp lệ, chạy BFS để tính khoảng cách thực tế từ mọi ô
-    đến Goal, trích xuất đặc trưng và gom tất cả thành một DataFrame được trộn ngẫu nhiên.
-    
-    Args:
-        maze_count: Số lượng mê cung cần tạo.
-        height: Chiều cao (số dòng) của mỗi mê cung.
-        width: Chiều rộng (số cột) của mỗi mê cung.
-        wall_probability: Xác suất tạo tường trong mỗi ô.
-        min_goal_distance: Khoảng cách ngắn nhất tối thiểu từ ô xa nhất đến Goal.
-        max_samples_per_maze: Số mẫu dữ liệu tối đa trích xuất từ mỗi mê cung.
-        seed: Hạt giống ngẫu nhiên để tái lập kết quả sinh dữ liệu.
-        
-    Returns:
-        Pandas DataFrame được trộn ngẫu nhiên chứa toàn bộ tập dữ liệu huấn luyện/kiểm thử.
-    """
     rng = np.random.default_rng(seed)
-    all_rows: list[dict[str, float]] = []
+    rows: list[dict[str, float]] = []
 
     for maze_id in range(maze_count):
-        # Tạo mê cung thỏa mãn điều kiện và tính khoảng cách từ Goal
         maze, goal, distances = generate_training_maze(
             height=height,
             width=width,
@@ -53,8 +70,7 @@ def generate_labeled_dataset(
             min_goal_distance=min_goal_distance,
             rng=rng,
         )
-        # Trích xuất các dòng đặc trưng và thêm vào danh sách tổng hợp
-        all_rows.extend(
+        rows.extend(
             build_dataset_rows(
                 maze=maze,
                 goal=goal,
@@ -65,9 +81,7 @@ def generate_labeled_dataset(
             )
         )
 
-    # Chuyển đổi thành DataFrame và trộn ngẫu nhiên toàn bộ dữ liệu
-    df = pd.DataFrame(all_rows)
-    return df.sample(frac=1.0, random_state=seed).reset_index(drop=True)
+    return pd.DataFrame(rows).sample(frac=1.0, random_state=seed).reset_index(drop=True)
 
 
 def generate_training_maze(
@@ -78,51 +92,80 @@ def generate_training_maze(
     rng: np.random.Generator,
     max_attempts: int = 1000,
 ) -> tuple[np.ndarray, Position, np.ndarray]:
-    """Sinh ra một mê cung ngẫu nhiên hợp lệ và có đủ số lượng ô trống huấn luyện.
-    
-    Mê cung hợp lệ phải có Goal nằm ở ô trống và khoảng cách từ ô trống xa nhất trong mê cung 
-    tới Goal phải đạt ít nhất bằng `min_goal_distance`.
-    
-    Args:
-        height: Chiều cao mê cung.
-        width: Chiều rộng mê cung.
-        wall_probability: Xác suất tạo tường.
-        min_goal_distance: Khoảng cách thực tế tối thiểu giữa Goal và ô xa nhất.
-        rng: Bộ sinh số ngẫu nhiên NumPy Generator.
-        max_attempts: Số lần thử tạo lại mê cung tối đa trước khi báo lỗi.
-        
-    Returns:
-        Một Tuple (maze, goal, distances) trong đó:
-        - maze: Ma trận mê cung 2D.
-        - goal: Tọa độ đích đến ngẫu nhiên được chọn.
-        - distances: Ma trận khoảng cách BFS từ các ô trống tới goal.
-        
-    Raises:
-        RuntimeError: Nếu vượt quá `max_attempts` lần thử mà không sinh được mê cung hợp lệ.
-    """
     for _ in range(max_attempts):
         maze = generate_maze(height, width, wall_probability, rng)
-        cells = free_cells(maze)
-        
-        # Bỏ qua nếu mê cung có quá ít ô trống (không đủ để đạt min_goal_distance)
-        if len(cells) < min_goal_distance:
+        if len(free_cells(maze)) < min_goal_distance:
             continue
 
         goal = random_free_cell(maze, rng)
         distances = bfs_distances_to_goal(maze, goal)
         finite_distances = distances[np.isfinite(distances)]
 
-        # Mê cung phải có ít nhất `min_goal_distance` ô trống liên thông được với Goal
-        if len(finite_distances) < min_goal_distance:
-            continue
-        # Khoảng cách tối đa từ Goal tới một ô trống bất kỳ trong tập liên thông phải đạt tối thiểu `min_goal_distance`
-        if finite_distances.max() < min_goal_distance:
-            continue
-
-        return maze, goal, distances
+        if len(finite_distances) >= min_goal_distance and finite_distances.max() >= min_goal_distance:
+            return maze, goal, distances
 
     raise RuntimeError(
-        "Không thể sinh được mê cung phù hợp sau nhiều lần thử. Hãy giảm bớt wall_probability hoặc min_goal_distance."
+        "Khong sinh duoc me cung hop le. Hay giam wall_probability hoac min_goal_distance."
     )
 
 
+def build_dataset_rows(
+    maze: np.ndarray,
+    goal: Position,
+    distances: np.ndarray,
+    maze_id: int,
+    max_samples: int | None,
+    rng: np.random.Generator,
+) -> list[dict[str, float]]:
+    reachable_positions = [
+        (int(row), int(col))
+        for row, col in zip(*np.where(np.isfinite(distances)), strict=True)
+    ]
+    if max_samples is not None and len(reachable_positions) > max_samples:
+        selected = rng.choice(len(reachable_positions), size=max_samples, replace=False)
+        reachable_positions = [reachable_positions[int(index)] for index in selected]
+
+    rows: list[dict[str, float]] = []
+    for position in reachable_positions:
+        values = state_to_features(maze, position, goal)
+        row = {name: float(value) for name, value in zip(FEATURE_COLUMNS, values, strict=True)}
+        row["maze_id"] = float(maze_id)
+        row[TARGET_COLUMN] = float(distances[position])
+        rows.append(row)
+    return rows
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Sinh dataset me cung duoc gan nhan bang BFS.")
+    parser.add_argument("--mazes", type=int, default=500)
+    parser.add_argument("--height", type=int, default=20)
+    parser.add_argument("--width", type=int, default=20)
+    parser.add_argument("--wall-prob", type=float, default=0.25)
+    parser.add_argument("--min-goal-distance", type=int, default=20)
+    parser.add_argument("--max-samples-per-maze", type=int, default=200)
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--output", type=Path, default=DATA_DIR / "maze_dataset.csv")
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+
+    print(f"Sinh {args.mazes} me cung...")
+    df = generate_labeled_dataset(
+        maze_count=args.mazes,
+        height=args.height,
+        width=args.width,
+        wall_probability=args.wall_prob,
+        min_goal_distance=args.min_goal_distance,
+        max_samples_per_maze=args.max_samples_per_maze,
+        seed=args.seed,
+    )
+    df.to_csv(args.output, index=False)
+    print(f"Da luu dataset: {args.output}")
+    print(f"So dong: {len(df):,}")
+
+
+if __name__ == "__main__":
+    main()

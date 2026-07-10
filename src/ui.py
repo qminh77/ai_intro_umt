@@ -16,10 +16,8 @@ import pygame
 
 from .config import MODELS_DIR
 from .dataset import generate_training_maze
-from .demo import choose_demo_start
-from .heuristics import AnnHeuristic
-from .maze import Position, WALL
-from .search import SearchResult, astar, bfs_path, manhattan
+from .demo import AnnHeuristic, choose_demo_start
+from .maze import Position, SearchResult, WALL, astar, bfs_path, manhattan
 
 # Tên và cấu hình hiển thị cho các thuật toán
 BFS_NAME = "BFS"
@@ -79,8 +77,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--model",
         type=Path,
-        default=MODELS_DIR / "ann_heuristic_goodfit.tflite",
-        help="Đường dẫn file mô hình .tflite.",
+        default=MODELS_DIR / "ann_heuristic_goodfit.keras",
+        help="Đường dẫn file mô hình .keras.",
     )
     return parser.parse_args()
 
@@ -832,4 +830,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
